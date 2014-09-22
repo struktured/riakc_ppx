@@ -11,8 +11,8 @@ module Link : sig
 end
 
 module Pair : sig
-  type t = { key   : string
-	   ; value : string option
+  type t = { key   : 'a
+	   ; value : 'b option
 	   }
 
   val parse : t Protobuf.Parser.t

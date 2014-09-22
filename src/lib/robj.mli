@@ -3,13 +3,13 @@ open Core.Std
 type 'a t
 
 module Usermeta : sig
-  type t
+  type ('a, 'b) t
 
-  val create    : k:string -> v:string option -> t
-  val key       : t -> string
-  val value     : t -> string option
-  val set_key   : string -> t -> t
-  val set_value : string option -> t -> t
+  val create    : k:'a -> v:'b option -> t
+  val key       : t -> 'a
+  val value     : t -> 'b option
+  val set_key   : 'a -> t -> t
+  val set_value : 'b option -> t -> t
 end
 
 module Index : sig
@@ -18,33 +18,33 @@ module Index : sig
 	     | Bad_int of string
 	     | Unknown of string
 
-  type t
+  type 'a t
 
-  val create    : k:string -> v:idx -> t
-  val key       : t -> string
+  val create    : k:'a -> v:idx -> t
+  val key       : t -> 'a
   val value     : t -> idx
-  val set_key   : string -> t -> t
+  val set_key   : 'a -> t -> t
   val set_value : idx -> t -> t
 end
 
 module Link : sig
-  type t
+  type 'a t
 
   val bucket : t -> string option
-  val key    : t -> string option
+  val key    : t -> 'a option
   val tag    : t -> string option
 
   val set_bucket : string option -> t -> t
-  val set_key    : string option -> t -> t
+  val set_key    : 'a option -> t -> t
   val set_tag    : string option -> t -> t
 end
 
 module Content : sig
-  type t
+  type ('a, 'b) t
 
   val create               : string -> t
 
-  val value                : t -> string
+  val value                : t -> 'b
   val content_type         : t -> string option
   val charset              : t -> string option
   val content_encoding     : t -> string option
@@ -56,7 +56,7 @@ module Content : sig
   val indices              : t -> Index.t list
   val deleted              : t -> bool
 
-  val set_value            : string -> t -> t
+  val set_value            : 'b -> t -> t
   val set_content_type     : string option -> t -> t
   val set_charset          : string option -> t -> t
   val set_content_encoding : string option -> t -> t

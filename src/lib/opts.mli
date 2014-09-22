@@ -24,7 +24,7 @@ module Get : sig
     | Deletedvclock
 
   type get = { bucket        : string
-	     ; key           : string
+             ; key           : 'a
 	     ; r             : Int32.t option
 	     ; pr            : Int32.t option
 	     ; basic_quorum  : bool
@@ -34,7 +34,7 @@ module Get : sig
 	     ; deletedvclock : bool
 	     }
 
-  val get_of_opts : t list -> b:string -> k:string -> get
+  val get_of_opts : t list -> b:string -> k:'a -> get
 
 end
 
@@ -52,7 +52,7 @@ module Put : sig
     | Return_head
 
   type put = { bucket          : string
-	     ; key             : string option
+	     ; key             : 'a option
 	     ; vclock          : string option
 	     ; content         : Robj.Content.t
 	     ; w               : Int32.t option
@@ -64,7 +64,7 @@ module Put : sig
 	     ; return_head     : bool
 	     }
 
-  val put_of_opts : t list -> b:string -> k:string option -> [ `No_siblings ] Robj.t -> put
+  val put_of_opts : t list -> b:string -> k:'a option -> [ `No_siblings ] Robj.t -> put
 end
 
 module Delete : sig
@@ -90,7 +90,7 @@ module Delete : sig
 		; dw     : Int32.t option
 		}
 
-  val delete_of_opts : t list -> b:string -> k:string -> delete
+  val delete_of_opts : t list -> b:string -> k:'a -> delete
 end
 
 module Index_search : sig

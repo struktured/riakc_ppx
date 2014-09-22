@@ -7,8 +7,8 @@ let option_of_bool = function
 let int_of_string i = Option.try_with (fun () -> Int.of_string i)
 
 module Usermeta = struct
-  type t = { key : string
-	   ; value : string option
+  type ('a, 'b) t = { key : 'a
+	   ; value : 'b option
 	   }
 
   let create ~k ~v = { key = k; value = v }
@@ -104,7 +104,8 @@ module Link = struct
 end
 
 module Content = struct
-  type t = { value            : string
+  type ('a, 'b) t = { 
+             value            : 'b
 	   ; content_type     : string option
 	   ; charset          : string option
 	   ; content_encoding : string option
@@ -112,7 +113,7 @@ module Content = struct
 	   ; links            : Link.t list
 	   ; last_mod         : Int32.t option
 	   ; last_mod_usec    : Int32.t option
-	   ; usermeta         : Usermeta.t list
+	   ; usermeta         : ('a,'b) Usermeta.t list
 	   ; indices          : Index.t list
 	   ; deleted          : bool
 	   }
@@ -187,10 +188,11 @@ module Content = struct
 
 end
 
-type 'a t = { contents  : Content.t list
-	    ; vclock    : string option
+type ('a, 'b) t = 
+        { contents: (('a, 'b) Content.t list)  
+            ; vclock    : string option
 	    ; unchanged : bool
-	    }
+	}
 
 let of_pb contents vclock unchanged =
   let contents = List.map ~f:Content.of_pb contents in

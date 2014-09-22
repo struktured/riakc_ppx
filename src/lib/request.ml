@@ -2,7 +2,7 @@ open Core.Std
 
 module B = Protobuf.Builder
 
-let wrap_request mc s =
+let wrap_request (mc:'a) s =
   (* Add 1 for the mc *)
   let l = String.length s + 1 in
   let preamble_mc = String.create 5 in
@@ -83,7 +83,9 @@ let delete d () =
   let open Result.Monad_infix in
   let b = B.create () in
   B.bytes     b 1 d.bucket >>= fun () ->
-  B.bytes     b 2 d.key    >>= fun () ->
+          let msg = B.embd_msg b 2 d.key in 
+          msg
+          >>= fun () ->
   B.int32_opt b 3 d.rw     >>= fun () ->
   B.bytes_opt b 4 d.vclock >>= fun () ->
   B.int32_opt b 5 d.r      >>= fun () ->

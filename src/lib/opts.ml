@@ -61,8 +61,8 @@ module Get = struct
     | Head
     | Deletedvclock
 
-  type get = { bucket        : string
-	     ; key           : string
+  type 'a get = { bucket        : string
+	     ; key           : 'a
 	     ; r             : Int32.t option
 	     ; pr            : Int32.t option
 	     ; basic_quorum  : bool
@@ -119,8 +119,8 @@ module Put = struct
     | If_none_match
     | Return_head
 
-  type put = { bucket          : string
-	     ; key             : string option
+  type 'a put = { bucket          : string
+	     ; key             : 'a option
 	     ; vclock          : string option
 	     ; content         : Robj.Content.t
 	     ; w               : Int32.t option
