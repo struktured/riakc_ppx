@@ -7,8 +7,8 @@ let option_of_bool = function
 let int_of_string i = Option.try_with (fun () -> Int.of_string i)
 
 module Usermeta = struct
-  type ('a, 'b) t = { key : 'a
-	   ; value : 'b option
+  type ('k, 'v) t = { key : 'k
+	   ; value : 'v option
 	   }
 
   let create ~k ~v = { key = k; value = v }
@@ -33,7 +33,7 @@ module Index = struct
 	     | Bad_int of string
 	     | Unknown of string
 
-  type t = { key : string
+  type 'k t = { key : 'k
 	   ; value : idx
 	   }
 
@@ -104,8 +104,8 @@ module Link = struct
 end
 
 module Content = struct
-  type ('a, 'b) t = { 
-             value            : 'b
+  type ('k, 'v) t = { 
+             value            : 'v
 	   ; content_type     : string option
 	   ; charset          : string option
 	   ; content_encoding : string option
@@ -113,7 +113,7 @@ module Content = struct
 	   ; links            : Link.t list
 	   ; last_mod         : Int32.t option
 	   ; last_mod_usec    : Int32.t option
-	   ; usermeta         : ('a,'b) Usermeta.t list
+	   ; usermeta         : ('k,'v) Usermeta.t list
 	   ; indices          : Index.t list
 	   ; deleted          : bool
 	   }

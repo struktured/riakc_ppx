@@ -4,20 +4,20 @@ module Old_string = String
 
 open Core.Std
 
-module P = Protobuf.Parser
+module D = Protobuf.Decoder
 
-type error = [ `Bad_payload | `Incomplete_payload | P.error ]
+type error = [ `Bad_payload | `Incomplete_payload | `Decoder_error]
 
-type 'a t = More of 'a | Done of 'a
+type 'a t = More of 'a [@key 1]| Done of 'a [@key 2] [@@deriving Protobuf]
 
-type props = { n_val      : int option
-	     ; allow_mult : bool option
-	     }
+type props = { n_val      : int option [@key 1]
+             ; allow_mult : bool option [@key 2]
+} [@@deriving Protobuf]
 
-type index_search = { keys         : string list
-		    ; results      : (string * string option) list
-		    ; continuation : string option
-		    }
+type index_search = { keys         : string list [@key 1]
+                    ; results      : (string * string option) list [@key 2]
+                    ; continuation : string option [@key 3]
+} [@@deriving Protobuf]
 
 let parse_mc s =
   let bits = Bitstring.bitstring_of_string s in
@@ -25,21 +25,19 @@ let parse_mc s =
   let module Char = Old_char in
   let module String = Old_string in
   let open Result.Monad_infix in
-  bitmatch bits with
-    | { mc      : 8
-      ; payload : -1 : bitstring
-      } ->
-      Ok (Core.Std.Char.of_int_exn mc, payload)
-    | { _ } ->
-      Error `Incomplete_payload
+  try 
+    let mc = String.get (Bitstring.string_of_bitstring (Bitstring.subbitstring bits 0 8)) 0 in
+    let payload = Bitstring.subbitstring bits 8 ((Bitstring.bitstring_length bits) - 8) in
+    Ok (mc, payload)
+  with e -> Error `Incomplete_payload
 
 
 let run mc mc_payload f =
   let open Result.Monad_infix in
   parse_mc mc_payload >>= function
     | (p_mc, payload) when p_mc = mc -> begin
-      P.State.create payload >>= fun s ->
-      P.run f s              >>= fun (r, _) ->
+      D.State.create payload >>= fun s ->
+      D.run f s              >>= fun (r, _) ->
       Ok r
     end
     | _ ->
@@ -128,13 +126,9 @@ let parse_length s =
   let module Char = Old_char in
   let module String = Old_string in
   let open Result.Monad_infix in
-  bitmatch bits with
-    | { len : 32 : bigendian } -> begin
-      match to_int len with
-	| Some n ->
-	  Ok n
-	| None ->
-	  Error `Overflow
-    end
-    | { _ } ->
-      Error `Incomplete
+  try 
+    let len32 = Int32.of_string (Bitstring.string_of_bitstring (Bitstring.takebits 32 bits)) in
+    match to_int len32 with
+    Some n -> Ok n
+    | None -> Error `Overflow
+  with Invalid_argument _ -> Error `Incomplete

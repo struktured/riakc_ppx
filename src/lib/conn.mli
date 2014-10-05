@@ -26,26 +26,26 @@ val list_buckets : t -> (string list, [> error | Response.error ]) Deferred.Resu
 val list_keys :
   t ->
   string ->
-  (string list, [> error | Response.error ]) Deferred.Result.t
+  ('k list, [> error | Response.error ]) Deferred.Result.t
 
 val list_keys_stream :
   t ->
   string ->
-  (string list -> unit Deferred.t) ->
+  ('k list -> unit Deferred.t) ->
   (unit, [> error | Response.error ]) Deferred.Result.t
 
 val get :
   t ->
   ?opts:Opts.Get.t list ->
   b:string ->
-  string ->
+  'k ->
   ([ `Maybe_siblings ] Robj.t, [> Opts.Get.error ]) Deferred.Result.t
 
 val put :
   t ->
   ?opts:Opts.Put.t list ->
   b:string ->
-  ?k:string ->
+  ?k:'k ->
   [ `No_siblings ] Robj.t ->
   (([ `Maybe_siblings ] Robj.t * string option), [> Opts.Put.error ]) Deferred.Result.t
 
@@ -53,7 +53,7 @@ val delete :
   t ->
   ?opts:Opts.Delete.t list ->
   b:string ->
-  string ->
+  'k ->
   (unit, [> Opts.Delete.error ]) Deferred.Result.t
 
 val index_search :

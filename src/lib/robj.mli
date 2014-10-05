@@ -3,13 +3,13 @@ open Core.Std
 type 'a t
 
 module Usermeta : sig
-  type ('a, 'b) t
+  type ('k, 'v) t
 
-  val create    : k:'a -> v:'b option -> t
-  val key       : t -> 'a
-  val value     : t -> 'b option
-  val set_key   : 'a -> t -> t
-  val set_value : 'b option -> t -> t
+  val create    : k:'k -> v:'v option -> t
+  val key       : t -> 'k
+  val value     : t -> 'v option
+  val set_key   : 'k -> t -> t
+  val set_value : 'v option -> t -> t
 end
 
 module Index : sig
@@ -40,42 +40,40 @@ module Link : sig
 end
 
 module Content : sig
-  type ('a, 'b) t
+  type 'v t = { 
+          value                : 'v [@key 1];
+          content_type         : string option  [@key 2];
+          charset              : string option  [@key 3];
+          content_encoding     : string option  [@key 4];
+          vtag                 : string option  [@key 5];
+          links                : Link.t list    [@key 6];
+          last_mod             : Int32.t option [@key 7];
+          last_mod_usec        : Int32.t option [@key 8];
+          usermeta             : Usermeta.t list [@key 9];
+          indices              : Index.t list [@key 10];
+          deleted              : bool [@key 11]
+  }
 
-  val create               : string -> t
-
-  val value                : t -> 'b
-  val content_type         : t -> string option
-  val charset              : t -> string option
-  val content_encoding     : t -> string option
-  val vtag                 : t -> string option
-  val links                : t -> Link.t list
-  val last_mod             : t -> Int32.t option
-  val last_mod_usec        : t -> Int32.t option
-  val usermeta             : t -> Usermeta.t list
-  val indices              : t -> Index.t list
-  val deleted              : t -> bool
-
-  val set_value            : 'b -> t -> t
-  val set_content_type     : string option -> t -> t
-  val set_charset          : string option -> t -> t
-  val set_content_encoding : string option -> t -> t
-  val set_vtag             : string option -> t -> t
-  val set_links            : Link.t list -> t -> t
-  val set_last_mod         : Int32.t option -> t -> t
-  val set_last_mod_usec    : Int32.t option -> t -> t
-  val set_usermeta         : Usermeta.t list -> t -> t
-  val set_indices          : Index.t list -> t -> t
-
-  val to_pb : t -> Pb_robj.Content.t
-  val of_pb : Pb_robj.Content.t -> t
+  val create               : string -> 'v t
+  val set_value            : 'v -> 'v t -> 'v t
+  val set_content_type     : string option -> 'v t -> 'v t
+  val set_charset          : string option -> 'v t -> 'v t
+  val set_content_encoding : string option -> 'v t -> 'v t
+  val set_vtag             : string option -> 'v t -> 'v t
+  val set_links            : Link.t list -> 'v t -> 'v t
+  val set_last_mod         : Int32.t option -> 'v t -> 'v t
+  val set_last_mod_usec    : Int32.t option -> 'v t -> 'v t
+  val set_usermeta         : Usermeta.t list -> 'v t -> 'v t
+  val set_indices          : Index.t list -> 'v t -> 'v t
+  val to_pb : 'v t -> Pb_robj.Content.t
+  val of_pb : Pb_robj.Content.t -> 'v t
 end
 
 val of_pb :
   Pb_robj.Content.t list ->
   string option ->
   bool option ->
-  [ `Maybe_siblings ] t
+  [ `Maybe_siblings ] 'v t
 
 val to_pb : 'a t -> (Pb_robj.Content.t list * string option)
 

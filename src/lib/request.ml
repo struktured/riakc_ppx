@@ -1,6 +1,6 @@
 open Core.Std
 
-module B = Protobuf.Builder
+module B = Protobuf.Encoder
 
 let wrap_request (mc:'a) s =
   (* Add 1 for the mc *)
@@ -25,7 +25,7 @@ let server_info () =
 let bucket_props bucket () =
   let open Result.Monad_infix in
   let b = B.create () in
-  B.bytes b 1 bucket >>= fun () ->
+  B.bytes bucket b;
   Ok (wrap_request '\x13' (B.to_string b))
 
 let list_buckets () =
@@ -34,7 +34,7 @@ let list_buckets () =
 let list_keys bucket () =
   let open Result.Monad_infix in
   let b = B.create () in
-  B.bytes b 1 bucket >>= fun () ->
+  B.bytes bucket b; 
   Ok (wrap_request '\x11' (B.to_string b))
 
 let get g () =

@@ -1,7 +1,7 @@
-PKG lwt lwt.syntax deriving-ocsigen deriving-ocsigen.syntax equeue rpclib netamqp js_of_ocaml.deriving js_of_ocaml.deriving.syntax calendar pa_ounit.syntax oUnit async async_extra riakc ZMQ lwt-zmq
+PKG lwt lwt.syntax equeue rpclib netamqp calendar pa_ounit.syntax oUnit async async_extra riakc ZMQ lwt-zmq ppx_deriving ppx_deriving_protobuf ppx_deriving_protobuf.runtime bitstring
 S src/lib
 S src/example
 S src/test
 B _build/lib
-EXT deriving-ocsigen.syntax pa_ounit.syntax pa_js.syntax lwt.syntax 
+EXT deriving-ocsigen.syntax pa_ounit.syntax pa_js.syntax lwt.syntax ppx_deriving ppx_deriving_protobuf
 
