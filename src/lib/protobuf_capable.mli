@@ -18,4 +18,4 @@ sig
 end
 
 
-module type Make = functor(Protobuf_t:Protobuf_t) -> S
+module Make : functor(Protobuf_t:Protobuf_t) -> S with type t = Protobuf_t.t
