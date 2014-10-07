@@ -1,36 +1,18 @@
-open Core.Std
+open Common
 
-type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_decoder_error ]
+module type Key = sig include Protobuf_capable.S end
+module type Value = sig include Protobuf_capable.S end
 
-type 'a t = More of 'a | Done of 'a
-
-type props = { n_val      : int option
-	     ; allow_mult : bool option
-	     }
-
-type index_search = { keys         : string list
-		    ; results      : (string * string option) list
-		    ; continuation : string option
-		    }
-
-val error        : string -> (unit t, [> error ]) Result.t
-val ping         : string -> (unit t, [> error ]) Result.t
-val client_id    : string -> (string t, [> error ]) Result.t
-val server_info  : string -> ((string option * string option) t, [> error ]) Result.t
-val list_buckets : string -> (string list t, [> error ]) Result.t
-val list_keys    : string -> (string list t, [> error ]) Result.t
-val bucket_props : string -> (props t, [> error ]) Result.t
-val get          : string -> ([ `Maybe_siblings ] Robj.t t, [> error ]) Result.t
-val put          : string -> (([ `Maybe_siblings ] Robj.t * string option) t, [> error ]) Result.t
-val delete       : string -> (unit t, [> error ]) Result.t
-
-val index_search :
-  string ->
-  (index_search t, [> error ]) Result.t
-
-val index_search_stream :
-  string ->
-  (index_search t, [> error ]) Result.t
-
-
-val parse_length : string -> (int, [> error ]) Result.t
+module Make : functor (Key:Key) (Value:Value) ->
+sig
+type pair = (Key.t * string option) [@@deriving Protobuf]
+type keys = Key.t list [@key 1] [@@deriving Protobuf]
+type client_id   = string [@@deriving Protobuf]
+type server_info = (string option * string option) [@@deriving Protobuf]
+type list_buckets = string list  [@@deriving Protobuf]
+type list_keys    = (string list * bool)  [@@deriving Protobuf]
+type bucket_props = (Int32.t option * bool option) [@@deriving Protobuf]
+type get          = (Robj.Content(Key) (Value).t list * string option * bool option) [@@deriving Protobuf]
+type put          = (Robj.Content(Key) (Value).t list * string option * string option) [@@deriving Protobuf]
+type index_search = (keys * pair list * string option * bool option) [@@deriving Protobuf]
+end

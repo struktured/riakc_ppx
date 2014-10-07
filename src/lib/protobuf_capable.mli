@@ -1,3 +1,4 @@
+open Core.Std
 
 module E = Protobuf.Encoder
 module D = Protobuf.Decoder
