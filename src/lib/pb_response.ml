@@ -1,59 +1,20 @@
-open Core.Std
+(*open Core.Std*)
 
-module D = Protobuf.Decoder
+(*type 'a list = 'a Core.Core_list.t [@key 1] [@@deriving Protobuf] *)
+module type Key = sig include Protobuf_capable.S end
+module type Value = sig include Protobuf_capable.S end
 
-module type Key = Protobuf_capable.S
-
-type pair = (string * string option)
-type keys = Key.t list
-
-let client_id =
-  D.bytes
-
-let server_info =
-  D.bytes_opt 1 >>= fun node ->
-  D.bytes_opt 2 >>= fun server ->
-  D.return (node, server)
-
-let list_buckets =
-  D.bytes_rep 1 >>= D.return
-
-let list_keys =
-  D.bytes_rep 1 >>= fun keys ->
-  D.bool_opt  2 >>= function
-    | Some true ->
-      D.return (keys, true)
-    | _ ->
-      D.return (keys, false)
-
-let bucket_props =
-  let props =
-    D.int32_opt 1 >>= fun n_val ->
-    D.bool_opt  2 >>= fun allow_mult ->
-    D.return (n_val, allow_mult)
-  in
-  D.embd_msg 1 props >>= D.return
-
-let get =
-  D.embd_msg_rep 1 Pb_robj.Content.parse >>= fun contents ->
-  D.bytes_opt    2                       >>= fun vclock ->
-  D.bool_opt     3                       >>= fun unchanged ->
-  D.return (contents, vclock, unchanged)
-
-let put =
-  D.embd_msg_rep 1 Pb_robj.Content.parse >>= fun contents ->
-  D.bytes_opt    2                       >>= fun vclock ->
-  D.bytes_opt    3                       >>= fun key ->
-  D.return (contents, vclock, key)
-
-let pair =
-  D.bytes     1 >>= fun key ->
-  D.bytes_opt 2 >>= fun value ->
-  D.return (key, value)
-
-let index_search =
-  D.bytes_rep    1      >>= fun keys ->
-  D.embd_msg_rep 2 pair >>= fun results ->
-  D.bytes_opt    3      >>= fun cont ->
-  D.bool_opt     4      >>= fun d ->
-  D.return (keys, results, cont, d)
+module Make (Key:Key) (Value:Value) =
+struct
+module Content = Protobuf_capable.Make(Robj.Content(Key)(Value))
+type pair = (Key.t * string option) [@@deriving Protobuf]
+type keys = Key.t list [@key 1] [@@deriving Protobuf]
+type client_id   = string [@@deriving Protobuf]
+type server_info = (string option * string option) [@@deriving Protobuf]
+type list_buckets = string list  [@@deriving Protobuf]
+type list_keys    = (string list * bool)  [@@deriving Protobuf]
+type bucket_props = (Int32.t option * bool option) [@@deriving Protobuf]
+type get          = (Content.t list [@key 1] * string option * bool option) [@@deriving Protobuf]
+type put          = (Content.t list * string option * string option) [@@deriving Protobuf]
+type index_search = (keys * pair list * string option * bool option) [@@deriving Protobuf]
+end

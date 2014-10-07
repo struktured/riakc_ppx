@@ -1,6 +1,6 @@
 open Core.Std
 
-type error = [ `Bad_payload | `Incomplete_payload | Protobuf.Parser.error ]
+type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_decoder_error ]
 
 type 'a t = More of 'a | Done of 'a
 

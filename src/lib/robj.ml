@@ -14,7 +14,28 @@ module Link(Key:Key) = struct
            ; tag    : string option [@key 3]
   } [@@deriving Protobuf]
 end
-module Link(Key:Key)= Protobuf_capable.Make(Link(Key))
+
+module Link(Key:Key) = Protobuf_capable.Make (Link (Key))
+
+module Link(Key:Key) = struct
+  type t = { bucket : string option [@key 1]
+           ; key    : Key.t option [@key 2]
+           ; tag    : string option [@key 3]
+  } [@@deriving Protobuf]
+end
+
+module Link(Key:Key) = Protobuf_capable.Make (Link (Key))
+
+
+
+module Link(Key:Key) = struct
+  type t = { bucket : string option [@key 1]
+           ; key    : Key.t option [@key 2]
+           ; tag    : string option [@key 3]
+  } [@@deriving Protobuf]
+end
+
+module Link(Key:Key) = Protobuf_capable.Make (Link (Key))
 
 
 module Pair (Key:Key) (Value:Value) = struct
