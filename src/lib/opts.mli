@@ -78,13 +78,13 @@ sig
   type error = [ `Bad_conn | Response.error ]
 
   type t =
-    | Timeout of int
-    | Rw      of Quorum.t
-    | R       of Quorum.t
-    | W       of Quorum.t
-    | Pr      of Quorum.t
-    | Pw      of Quorum.t
-    | Dw      of Quorum.t
+    | Timeout [@key 1] of int
+    | Rw      [@key 2] of Quorum.t
+    | R       [@key 3]  of Quorum.t
+    | W        [@key 4] of Quorum.t
+    | Pr       [@key 5] of Quorum.t
+    | Pw      [@key 6] of Quorum.t
+    | Dw      [@key 7] of Quorum.t [@@deriving Protobuf]
 
   type delete = { bucket : string [@key 1]
                 ; key    : Key.t [@key 2]

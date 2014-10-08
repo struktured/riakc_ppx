@@ -79,7 +79,7 @@ module Get(Key:Key) = struct
              ; deletedvclock : bool option [@key 9]
   } [@@deriving Protobuf]
 
-  let get_of_opts opts ~b ~k =
+  let get_of_opts (opts:t list) ~b ~k =
     let g = { bucket        = b
 	    ; key           = k
 	    ; r             = None
@@ -91,7 +91,7 @@ module Get(Key:Key) = struct
 	    ; deletedvclock = None
 	    }
     in
-    List.fold_left
+    Core.Std.List.fold_left
       ~f:(fun g -> function
 	| Timeout _ ->
 	  g
@@ -117,27 +117,27 @@ module Put(Key:Key) (Value:Value) = struct
   type error = [ `Bad_conn | Response.error ]
 
   type t =
-    | Timeout of int
-    | W       of Quorum.t
-    | Dw      of Quorum.t
-    | Pw      of Quorum.t
-    | Return_body
-    | If_not_modified
-    | If_none_match
-    | Return_head
+    | Timeout [@key 1] of int
+    | W      [@key 2]  of Quorum.t
+    | Dw     [@key 3]  of Quorum.t
+    | Pw      [@key 4] of Quorum.t
+    | Return_body [@key 5] 
+    | If_not_modified [@key 6] 
+    | If_none_match [@key 7] 
+    | Return_head [@key 8] [@@deriving Protobuf]
 
-  type put = { bucket          : string
-	     ; key             : Key.t option
-	     ; vclock          : string option
-	     ; content         : Robj.Content(Key)(Value).t
-	     ; w               : int option
-	     ; dw              : int option
-	     ; pw              : int option
-	     ; return_body     : bool
-	     ; if_not_modified : bool
-	     ; if_none_match   : bool
-	     ; return_head     : bool
-	     }
+  type put = { bucket          : string [@key 1]
+             ; key             : Key.t option [@key 2]
+             ; vclock          : string option [@key 3]
+             ; content         : Robj.Content(Key)(Value).t [@key 4]
+             ; w               : int option [@key 5]
+             ; dw              : int option [@key 6]
+             ; pw              : int option [@key 7]
+             ; return_body     : bool option [@key 8]
+             ; if_not_modified : bool option [@key 9]
+             ; if_none_match   : bool option [@key 10]
+             ; return_head     : bool option [@key 11]
+  } [@@deriving Protobuf]
 
   module Robj = Robj.Make(Key)(Value)
   let put_of_opts opts ~b ~k robj =
@@ -148,13 +148,13 @@ module Put(Key:Key) (Value:Value) = struct
 	    ; w               = None
 	    ; dw              = None
 	    ; pw              = None
-	    ; return_body     = false
-	    ; if_not_modified = false
-	    ; if_none_match   = false
-	    ; return_head     = false
+	    ; return_body     = None
+	    ; if_not_modified = None
+	    ; if_none_match   = None
+	    ; return_head     = None
 	    }
     in
-    List.fold_left
+    Core.Std.List.fold_left
       ~f:(fun p -> function
 	| Timeout _ ->
 	  p
@@ -165,39 +165,39 @@ module Put(Key:Key) (Value:Value) = struct
 	| Pw n ->
 	  { p with pw = Some (Quorum.to_int32 n) }
 	| Return_body ->
-	  { p with return_body = true }
+	  { p with return_body = Some true }
 	| If_not_modified ->
-	  { p with if_not_modified = true }
+	  { p with if_not_modified = Some true }
 	| If_none_match ->
-	  { p with if_none_match = true }
+	  { p with if_none_match = Some true }
 	| Return_head ->
-	  { p with return_head = true })
+	  { p with return_head = Some true })
       ~init:p
       opts
 end
 
-module Delete = struct
+module Delete(Key:Key) = struct
   type error = [ `Bad_conn | Response.error ]
 
   type t =
-    | Timeout of int
-    | Rw      of Quorum.t
-    | R       of Quorum.t
-    | W       of Quorum.t
-    | Pr      of Quorum.t
-    | Pw      of Quorum.t
-    | Dw      of Quorum.t
+    | Timeout [@key 1] of int
+    | Rw      [@key 2] of Quorum.t
+    | R       [@key 3] of Quorum.t
+    | W       [@key 4] of Quorum.t
+    | Pr      [@key 5] of Quorum.t
+    | Pw      [@key 6] of Quorum.t
+    | Dw      [@key 7] of Quorum.t [@@deriving Protobuf]
 
-  type delete = { bucket : string
-		; key    : string
-		; rw     : int option
-		; vclock : string option
-		; r      : int option
-		; w      : int option
-		; pr     : int option
-		; pw     : int option
-		; dw     : int option
-		}
+  type delete = { bucket : string [@key 1]
+                ; key    : Key.t [@key 2]
+                ; rw     : int option [@key 3]
+                ; vclock : string option [@key 4]
+                ; r      : int option [@key 5]
+                ; w      : int option [@key 6]
+                ; pr     : int option [@key 7]
+                ; pw     : int option [@key 8]
+                ; dw     : int option [@key 9]
+  } [@@deriving Protobuf]
 
   let delete_of_opts opts ~b ~k =
     let d = { bucket = b
@@ -211,7 +211,7 @@ module Delete = struct
 	    ; dw     = None
 	    }
     in
-    List.fold_left
+    Core.Std.List.fold_left
       ~f:(fun d -> function
 	| Timeout _ ->
 	  d
@@ -234,7 +234,7 @@ end
 module Index_search = struct
   type error = [ `Bad_conn | Response.error ]
 
-  module Make_query = struct
+  module Query = struct
     type 'a range = { min          : 'a [@key 1]
                     ; max          : 'a [@key 2]
                     ; return_terms : bool [@key 3]
@@ -264,9 +264,10 @@ module Index_search = struct
 
     let range_int ~min ~max ~return_terms =
       Range_int { min; max; return_terms }
+    let from_protobuf =  t_from_protobuf
+    let to_protobuf = t_to_protobuf
   end
 
-  module Query = Protobuf_capable.Make(Make_query)
 
   module Kontinuation = struct
     type t = string [@@deriving Protobuf]
@@ -299,7 +300,7 @@ module Index_search = struct
 		; timeout      = None
 		}
     in
-    List.fold_left
+    Core.Std.List.fold_left
       ~f:(fun idx_s -> function
 	| Timeout _ ->
 	  idx_s
