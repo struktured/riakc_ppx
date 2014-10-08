@@ -1,6 +1,5 @@
 open Core.Std
 
-type 'a t
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
 
@@ -59,6 +58,7 @@ end
 
 module Make : functor(Key:Key) (Value:Value) ->
 sig
+  type 'a t 
   val of_pb :
     Content (Key) (Value).t list ->
     string option ->

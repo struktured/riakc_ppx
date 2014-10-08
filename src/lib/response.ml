@@ -1,6 +1,8 @@
 open Common
 module E = Protobuf.Encoder
 module D = Protobuf.Decoder
+type error = [`Protobuf_encoder_error]
+
 
 
 module type Key = sig include Protobuf_capable.S end

@@ -1,4 +1,5 @@
 open Common
+type error = [`Protobuf_encoder_error]
 
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end

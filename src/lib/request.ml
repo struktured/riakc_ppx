@@ -1,5 +1,9 @@
 open Core.Std
 
+module type Key = sig include Protobuf_capable.S end
+module type Value = sig include Protobuf_capable.S end
+
+
 module B = Protobuf.Encoder
 
 let wrap_request (mc:'a) s =
@@ -13,6 +17,9 @@ let wrap_request (mc:'a) s =
   preamble_mc.[4] <- mc;
   preamble_mc ^ s
 
+module Make(Key:Key) (Value:Value) = 
+  struct
+type error = [`Unknown]
 let ping () =
   Ok (wrap_request '\x01' "")
 
@@ -38,51 +45,28 @@ let list_keys bucket () =
   Ok (wrap_request '\x11' (B.to_string b))
 
 let get g () =
-  let open Opts.Get in
-  let basic_quorum  = Option.some_if g.basic_quorum true in
-  let notfound_ok   = Option.some_if g.notfound_ok true in
-  let head          = Option.some_if g.head true in
-  let deletedvclock = Option.some_if g.deletedvclock true in
+  let module Get = Opts.Get(Key) in
+  let open Get in 
   let open Result.Monad_infix in
-  let b = B.create () in
-  B.bytes     b 1 g.bucket       >>= fun () ->
-  B.bytes     b 2 g.key          >>= fun () ->
-  B.int32_opt b 3 g.r            >>= fun () ->
-  B.int32_opt b 4 g.pr           >>= fun () ->
-  B.bool_opt  b 5 basic_quorum   >>= fun () ->
-  B.bool_opt  b 6 notfound_ok    >>= fun () ->
-  B.bytes_opt b 7 g.if_modified  >>= fun () ->
-  B.bool_opt  b 8 head           >>= fun () ->
-  B.bool_opt  b 9 deletedvclock  >>= fun () ->
+  let b = B.create () in 
+  Get.get_to_protobuf g b;
   Ok (wrap_request '\x09' (B.to_string b))
 
 let put p () =
-  let open Opts.Put in
-  let content         = Robj.Content.to_pb p.content in
-  let return_body     = Option.some_if p.return_body true in
-  let if_not_modified = Option.some_if p.if_not_modified true in
-  let if_none_match   = Option.some_if p.if_none_match true in
-  let return_head     = Option.some_if p.return_head true in
-  let open Result.Monad_infix in
+  let module Put = Opts.Put (Key) (Value) in
+  let module Content = Robj.Content(Key) (Value) in
+  let open Put in
   let b = B.create () in
-  B.bytes     b  1 p.bucket                      >>= fun () ->
-  B.bytes_opt b  2 p.key                         >>= fun () ->
-  B.bytes_opt b  3 p.vclock                      >>= fun () ->
-  B.embd_msg  b  4 content Pb_robj.Content.build >>= fun () ->
-  B.int32_opt b  5 p.w                           >>= fun () ->
-  B.int32_opt b  6 p.dw                          >>= fun () ->
-  B.bool_opt  b  7 return_body                   >>= fun () ->
-  B.int32_opt b  8 p.pw                          >>= fun () ->
-  B.bool_opt  b  9 if_not_modified               >>= fun () ->
-  B.bool_opt  b 10 if_none_match                 >>= fun () ->
-  B.bool_opt  b 11 return_head                   >>= fun () ->
+  Put.put_to_protobuf p b;
   Ok (wrap_request '\x0B' (B.to_string b))
 
 let delete d () =
-  let open Opts.Delete in
+  let module Delete = Opts.Delete (Key) in
+  let open Delete in
   let open Result.Monad_infix in
   let b = B.create () in
-  B.bytes     b 1 d.bucket >>= fun () ->
+  Delete.delete_to_protobuf d b; 
+(*  B.bytes     b 1 d.bucket >>= fun () ->
           let msg = B.embd_msg b 2 d.key in 
           msg
           >>= fun () ->
@@ -93,6 +77,7 @@ let delete d () =
   B.int32_opt b 7 d.pr     >>= fun () ->
   B.int32_opt b 8 d.pw     >>= fun () ->
   B.int32_opt b 9 d.dw     >>= fun () ->
+  *) 
   Ok (wrap_request '\x0D' (B.to_string b))
 
 let index_search ~stream idx_s () =
@@ -165,7 +150,8 @@ let index_search ~stream idx_s () =
   let cont = determine_cont  idx_s in
   let b    = B.create () in
   let open Result.Monad_infix in
-  B.bytes     b  1 idx_s.bucket                     >>= fun () ->
+  
+  (*B.bytes     b  1 idx_s.bucket                     >>= fun () ->
   B.bytes     b  2 idx                              >>= fun () ->
   B.enum      b  3 idx_s.query_type query_type_conv >>= fun () ->
   B.bytes_opt b  4 key                              >>= fun () ->
@@ -175,5 +161,6 @@ let index_search ~stream idx_s () =
   B.bool      b  8 stream                           >>= fun () ->
   B.int32_opt b  9 idx_s.max_results                >>= fun () ->
   B.bytes_opt b 10 cont                             >>= fun () ->
-  Ok (wrap_request '\x19' (B.to_string b))
+  *)Ok (wrap_request '\x19' (B.to_string b))
+end
 

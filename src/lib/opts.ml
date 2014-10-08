@@ -1,87 +1,94 @@
-open Core.Std
+
+
+module type Key = sig include Protobuf_capable.S end
+module type Value = sig include Protobuf_capable.S end
+
 
 module Quorum = struct
   type t =
-    | One
-    | All
-    | Default
-    | Quorum
-    | N of int
+    | One [@key 1]
+    | All [@key 2]
+    | Default [@key 3]
+    | Quorum [@key 4]
+    | N [@key 5] of int [@@deriving Protobuf] 
 
-  let one     = Int32.of_int_exn (-2)
-  let quorum  = Int32.of_int_exn (-3)
-  let all     = Int32.of_int_exn (-4)
-  let default = Int32.of_int_exn (-5)
-
-  let to_int32 = function
+  let one     = Core.Std.Int32.of_int_exn (-2)
+  let quorum  = Core.Std.Int32.of_int_exn (-3)
+  let all     = Core.Std.Int32.of_int_exn (-4)
+  let default = Core.Std.Int32.of_int_exn (-5)
+  
+  let to_int32 = let conv x = 
+      match Core.Std.Int32.to_int x with Some n -> n | None -> raise (Invalid_argument "x") in
+   function
     | N n when n > 1000 ->
       (* Arbitrary and cheap, but n should always be small *)
       failwith "to_int32 - n too large"
     | N n ->
-      Int32.of_int_exn n
+      (*Core.Std.Int32.of_int_exn *) n
     | One ->
-      one
+      conv one
     | All ->
-      all
+      conv all
     | Default ->
-      default
+      conv default
     | Quorum ->
-      quorum
+      conv quorum
 
   let of_int32 = function
-    | n when Int32.equal n one ->
+    | n when Core.Std.Int32.equal n one ->
       One
-    | n when Int32.equal n all ->
+    | n when Core.Std.Int32.equal n all ->
       All
-    | n when Int32.equal n default ->
+    | n when Core.Std.Int32.equal n default ->
       Default
-    | n when Int32.equal n quorum ->
+    | n when Core.Std.Int32.equal n quorum ->
       Quorum
     | n -> begin
-      match Int32.to_int n with
+      match Core.Std.Int32.to_int n with
 	| Some n ->
 	  N n
 	| None ->
 	  failwith "of_int32 - n too large"
     end
 
-
+  let from_protobuf = t_from_protobuf
+  let to_protobuf = t_to_protobuf
 end
 
-module Get = struct
+module Get(Key:Key) = struct
   type error = [ `Bad_conn | `Notfound | Response.error ]
 
   type t =
-    | Timeout     of int
-    | R           of Quorum.t
-    | Pr          of Quorum.t
-    | If_modified of string
-    | Basic_quorum
-    | Notfound_ok
-    | Head
-    | Deletedvclock
+    | Timeout     [@key 1] of int
+    | R           [@key 2] of Quorum.t
+    | Pr          [@key 3] of Quorum.t
+    | If_modified [@key 4] of string
+    | Basic_quorum [@key 5]
+    | Notfound_ok [@key 6]
+    | Head [@key 7]
+    | Deletedvclock [@key 8] [@@deriving Protobuf]
 
-  type 'a get = { bucket        : string
-	     ; key           : 'a
-	     ; r             : Int32.t option
-	     ; pr            : Int32.t option
-	     ; basic_quorum  : bool
-	     ; notfound_ok   : bool
-	     ; if_modified   : string option
-	     ; head          : bool
-	     ; deletedvclock : bool
-	     }
+  type get = { bucket        : string [@key 1]
+             ; key           : Key.t [@key 2]
+             ; r             : int option [@key 3]
+             ; pr            : int option [@key 4]
+             ; basic_quorum  : bool option [@key 5]
+             ; notfound_ok   : bool option [@key 6]
+             ; if_modified   : string option [@key 7]
+             ; head          : bool option [@key 8]
+             ; deletedvclock : bool option [@key 9]
+  } [@@deriving Protobuf]
 
   let get_of_opts opts ~b ~k =
     let g = { bucket        = b
 	    ; key           = k
 	    ; r             = None
 	    ; pr            = None
-	    ; basic_quorum  = false
-	    ; notfound_ok   = false
+	    ; basic_quorum  = None
+	    ; notfound_ok   = None
 	    ; if_modified   = None
-	    ; head          = false
-	    ; deletedvclock = false
+	    ; head          = None
+	    ; deletedvclock = None
 	    }
     in
     List.fold_left
@@ -95,18 +102,18 @@ module Get = struct
 	| If_modified s ->
 	  { g with if_modified = Some s }
 	| Basic_quorum ->
-	  { g with basic_quorum = true }
+	  { g with basic_quorum = Some true }
 	| Notfound_ok ->
-	  { g with notfound_ok = true }
+	  { g with notfound_ok = Some true }
 	| Head ->
-	  { g with head = true }
+	  { g with head = Some true }
 	| Deletedvclock ->
-	  { g with deletedvclock = true })
+	  { g with deletedvclock = Some true })
       ~init:g
       opts
 end
 
-module Put = struct
+module Put(Key:Key) (Value:Value) = struct
   type error = [ `Bad_conn | Response.error ]
 
   type t =
@@ -119,19 +126,20 @@ module Put = struct
     | If_none_match
     | Return_head
 
-  type 'a put = { bucket          : string
-	     ; key             : 'a option
+  type put = { bucket          : string
+	     ; key             : Key.t option
 	     ; vclock          : string option
-	     ; content         : Robj.Content.t
-	     ; w               : Int32.t option
-	     ; dw              : Int32.t option
-	     ; pw              : Int32.t option
+	     ; content         : Robj.Content(Key)(Value).t
+	     ; w               : int option
+	     ; dw              : int option
+	     ; pw              : int option
 	     ; return_body     : bool
 	     ; if_not_modified : bool
 	     ; if_none_match   : bool
 	     ; return_head     : bool
 	     }
 
+  module Robj = Robj.Make(Key)(Value)
   let put_of_opts opts ~b ~k robj =
     let p = { bucket          = b
 	    ; key             = k
@@ -182,13 +190,13 @@ module Delete = struct
 
   type delete = { bucket : string
 		; key    : string
-		; rw     : Int32.t option
+		; rw     : int option
 		; vclock : string option
-		; r      : Int32.t option
-		; w      : Int32.t option
-		; pr     : Int32.t option
-		; pw     : Int32.t option
-		; dw     : Int32.t option
+		; r      : int option
+		; w      : int option
+		; pr     : int option
+		; pw     : int option
+		; dw     : int option
 		}
 
   let delete_of_opts opts ~b ~k =
@@ -226,17 +234,24 @@ end
 module Index_search = struct
   type error = [ `Bad_conn | Response.error ]
 
-  module Query = struct
-    type 'a range = { min          : 'a
-		    ; max          : 'a
-		    ; return_terms : bool
-		    }
+  module Make_query = struct
+    type 'a range = { min          : 'a [@key 1]
+                    ; max          : 'a [@key 2]
+                    ; return_terms : bool [@key 3]
+    } [@@deriving Protobuf]
+
+
+    let string_from_protobuf = Protobuf.Decoder.bytes
+    let string_to_protobuf = Protobuf.Encoder.bytes
+    let int_from_protobuf d = 0
+    let int_to_protobuf i e = ()
+
 
     type t =
-      | Eq_string    of string
-      | Eq_int       of int
-      | Range_string of string range
-      | Range_int    of int range
+      | Eq_string    [@key 1] of string
+      | Eq_int       [@key 2] of int 
+      | Range_string [@key 3] of string range 
+      | Range_int    [@key 4] of int range [@@deriving Protobuf]
 
     let eq_string key =
       Eq_string key
@@ -251,25 +266,29 @@ module Index_search = struct
       Range_int { min; max; return_terms }
   end
 
+  module Query = Protobuf_capable.Make(Make_query)
+
   module Kontinuation = struct
-    type t = string
+    type t = string [@@deriving Protobuf]
 
     let of_string s = s
     let to_string t = t
+    let from_protobuf = t_from_protobuf
+    let to_protobuf = t_to_protobuf
   end
 
   type t =
-    | Timeout      of int
-    | Max_results  of Int32.t
-    | Continuation of Kontinuation.t
+    | Timeout      [@key 1] of int 
+    | Max_results  [@key 2] of int
+    | Continuation [@key 3] of Kontinuation.t [@@deriving Protobuf]
 
-  type index_search = { bucket       : string
-		      ; index        : string
-		      ; query_type   : Query.t
-		      ; max_results  : Int32.t option
-		      ; continuation : Kontinuation.t option
-		      ; timeout      : int option
-		      }
+  type index_search = { bucket       : string [@key 1]
+                      ; index        : string [@key 2]
+                      ; query_type   : Query.t [@key 3]
+                      ; max_results  : int option [@key 4]
+                      ; continuation : Kontinuation.t option [@key 5]
+                      ; timeout      : int option [@key 6]
+  } [@@deriving Protobuf]
 
   let index_search_of_opts opts ~b ~index ~query_type =
     let idx_s = { bucket       = b
