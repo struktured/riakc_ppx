@@ -1,5 +1,4 @@
 
-
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
 
@@ -17,8 +16,9 @@ module Quorum = struct
   let all     = Core.Std.Int32.of_int_exn (-4)
   let default = Core.Std.Int32.of_int_exn (-5)
   
-  let to_int32 = let conv x = 
-      match Core.Std.Int32.to_int x with Some n -> n | None -> raise (Invalid_argument "x") in
+  let to_int32 = 
+    let conv x = 
+      match Core.Std.Int32.to_int x with Some n -> n | None -> raise (Invalid_argument (Core.Std.Int32.to_string x)) in
    function
     | N n when n > 1000 ->
       (* Arbitrary and cheap, but n should always be small *)

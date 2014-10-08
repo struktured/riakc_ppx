@@ -1,12 +1,9 @@
-open Core.Std
 
 let option_of_bool = function
   | Some true -> Some true
   | _         -> None
 
 
-module type Key = Protobuf_capable.S
-module type Value = Protobuf_capable.S
 
 module Link(Key:Key) = struct
   type t = { bucket : string option [@key 1]

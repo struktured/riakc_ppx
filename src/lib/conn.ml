@@ -152,7 +152,9 @@ let list_buckets t =
     | Error err ->
       Error err
 
-let list_keys_stream t bucket consumer =
+module Make(Key:Key)(Value:Value) =
+struct 
+  let list_keys_stream t bucket consumer =
   do_request_stream
     t
     consumer
@@ -232,4 +234,5 @@ let index_search t ?(opts = []) ~b ~index query_type =
       Error `Wrong_type
     | Error err ->
       Error err
+end
 

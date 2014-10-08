@@ -1,5 +1,7 @@
+
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
+
 
 module Quorum : sig
   type t =
@@ -81,8 +83,8 @@ sig
     | Timeout [@key 1] of int
     | Rw      [@key 2] of Quorum.t
     | R       [@key 3]  of Quorum.t
-    | W        [@key 4] of Quorum.t
-    | Pr       [@key 5] of Quorum.t
+    | W       [@key 4] of Quorum.t
+    | Pr      [@key 5] of Quorum.t
     | Pw      [@key 6] of Quorum.t
     | Dw      [@key 7] of Quorum.t [@@deriving Protobuf]
 
@@ -120,7 +122,7 @@ module Index_search : sig
     val range_string : min:string -> max:string -> return_terms:bool -> t
     val range_int    : min:int    -> max:int    -> return_terms:bool -> t
     include Protobuf_capable.S with type t := t
-    end
+  end
 
   module Kontinuation : sig
     type t [@@deriving Protobuf]
