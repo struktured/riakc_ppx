@@ -1,6 +1,10 @@
 open Core.Std
 open Async.Std
 
+module type Key = sig include Protobuf_capable.S end
+module type Value = sig include Protobuf_capable.S end
+
+
 type t = { r : Reader.t
 	 ; w : Writer.t
 	 }
@@ -152,37 +156,35 @@ let list_buckets t =
     | Error err ->
       Error err
 
-module Make(Key:Key)(Value:Value) =
+module Make(Key:Key) (Value:Value) =
 struct 
-  let list_keys_stream t bucket consumer =
-  do_request_stream
-    t
-    consumer
-    (Request.list_keys bucket)
-    Response.list_keys
+  type conn = t 
+  type cache = {conn:conn;bucket:string} 
+  module Resp = Response.Make(Key)(Value)
+  module Req = Request.Make(Key)(Value)
+  module Get = Opts.Get(Key)
 
-let list_keys t bucket =
-  do_request
-    t
-    (Request.list_keys bucket)
-    Response.list_keys
+  let list_keys_stream cache consumer =
+  let req_list_keys = Request.list_keys cache.bucket () in
+  do_request_stream
+    cache.conn req_list_keys 
   >>| function
     | Ok keys ->
-      Ok (List.concat keys)
+      Ok (List.concat (List.map ~f:(fun s -> (Protobuf.Decoder.decode_exn Key.t_from_protobuf s)) keys)) 
     | Error err ->
       Error err
 
 let get t ?(opts = []) ~b k =
   do_request
     t
-    (Request.get (Opts.Get.get_of_opts opts ~b ~k))
-    Response.get
+    (Req.get (Get.get_of_opts opts ~b ~k))
+    Resp.get
   >>| function
     | Ok [robj] -> begin
       if Robj.contents robj = [] && Robj.vclock robj = None then
 	Error `Notfound
       else
-	Ok robj
+	Ok robj 
     end
     | Ok _ ->
       Error `Wrong_type
