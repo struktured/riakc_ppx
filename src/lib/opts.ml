@@ -57,14 +57,14 @@ module Get(Key:Key) = struct
   type error = [ `Bad_conn | `Notfound | Response.error ]
 
   type t =
-    | Timeout     [@key 1] of int
-    | R           [@key 2] of Quorum.t
-    | Pr          [@key 3] of Quorum.t
-    | If_modified [@key 4] of string
-    | Basic_quorum [@key 5]
-    | Notfound_ok [@key 6]
-    | Head [@key 7]
-    | Deletedvclock [@key 8] [@@deriving Protobuf]
+    | Timeout     of int
+    | R           of Quorum.t
+    | Pr          of Quorum.t
+    | If_modified of string
+    | Basic_quorum 
+    | Notfound_ok 
+    | Head
+    | Deletedvclock
 
   type get = { bucket        : string [@key 1]
              ; key           : Key.t [@key 2]
@@ -233,23 +233,35 @@ module Index_search = struct
   type error = [ `Bad_conn | Response.error ]
 
   module Query = struct
-    type 'a range = { min          : 'a [@key 1]
-                    ; max          : 'a [@key 2]
+    type 'a range = { min          : 'a 
+                    ; max          : 'a 
+                    ; return_terms : bool 
+    } 
+
+    type string_range = { min          : string [@key 1]
+                    ; max          : string [@key 2]
+                    ; return_terms : bool [@key 3]
+    } [@@deriving Protobuf]
+
+    type int_range = { min          : int [@key 1]
+                    ; max          : int [@key 2]
                     ; return_terms : bool [@key 3]
     } [@@deriving Protobuf]
 
 
+
+(*
     let string_from_protobuf = Protobuf.Decoder.bytes
     let string_to_protobuf = Protobuf.Encoder.bytes
     let int_from_protobuf d = 0
     let int_to_protobuf i e = ()
-
+*)
 
     type t =
       | Eq_string    [@key 1] of string
       | Eq_int       [@key 2] of int 
-      | Range_string [@key 3] of string range 
-      | Range_int    [@key 4] of int range [@@deriving Protobuf]
+      | Range_string [@key 3] of string_range 
+      | Range_int    [@key 4] of int_range [@@deriving Protobuf]
 
     let eq_string key =
       Eq_string key
