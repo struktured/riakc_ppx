@@ -1,4 +1,3 @@
-open Core.Std
 module E = Protobuf.Encoder
 module D = Protobuf.Decoder
 
@@ -23,7 +22,7 @@ struct
     include Protobuf_t
     let to_protobuf = t_to_protobuf
     let from_protobuf = t_from_protobuf
-    let parse p = Result.return (t_from_protobuf p)
-    let build t = Result.return (Ok (E.encode t_to_protobuf t))
+    let parse p = Core.Std.Result.return (t_from_protobuf p)
+    let build t = Core.Std.Result.return (Core.Std.Result.Ok (E.encode t_to_protobuf t))
 end
 

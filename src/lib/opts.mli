@@ -9,15 +9,15 @@ module Quorum : sig
     | All [@key 2]
     | Default [@key 3]
     | Quorum [@key 4]
-    | N [@key 5] of int [@key 6] [@deriving Protobouf]
+    | N [@key 5] of int [@deriving Protobouf]
 
-  val to_int32 : t -> int
-  val of_int32 : Core.Std.Int32.t -> t
+(*  val to_int32 : t -> int
+  val of_int32 : Core.Std.Int32.t -> t *)
 end
 
 module Get : functor(Key:Key) ->
 sig
-  type error =[ `Bad_conn | `Notfound | Response.error ]
+  type error =[ `Bad_conn | `Notfound | Response.error ] 
 
   type t =
     | Timeout     [@key 1] of int 
@@ -47,8 +47,6 @@ end
 module Put : functor (Key:Key) (Value:Value) ->
 sig
   type error = [ `Bad_conn | Response.error ] 
-  (*cmodule type Content = Robj.Content(Key) (Value) *)
- (* module type Robj = Robj.Make (Key) (Value) *)
   type t =
     | Timeout [@key 1] of int 
     | W       [@key 2] of Quorum.t 

@@ -10,13 +10,13 @@ module Quorum = struct
     | Default [@key 3]
     | Quorum [@key 4]
     | N [@key 5] of int [@@deriving Protobuf] 
-
+(*
   let one     = Core.Std.Int32.of_int_exn (-2)
   let quorum  = Core.Std.Int32.of_int_exn (-3)
   let all     = Core.Std.Int32.of_int_exn (-4)
   let default = Core.Std.Int32.of_int_exn (-5)
-  
-  let to_int32 = 
+ 
+  let to_int32 =  
     let conv x = 
       match Core.Std.Int32.to_int x with Some n -> n | None -> raise (Invalid_argument (Core.Std.Int32.to_string x)) in
    function
@@ -50,10 +50,10 @@ module Quorum = struct
 	| None ->
 	  failwith "of_int32 - n too large"
     end
-
+*)
   let from_protobuf = t_from_protobuf
   let to_protobuf = t_to_protobuf
-end
+end [@@deriving Protobuf]
 
 module Get(Key:Key) = struct
   type error = [ `Bad_conn | `Notfound | Response.error ]
@@ -92,7 +92,7 @@ module Get(Key:Key) = struct
 	    }
     in
     Core.Std.List.fold_left
-      ~f:(fun g -> function
+      ~f:(fun g -> function _ -> g) (*function
 	| Timeout _ ->
 	  g
 	| R n ->
@@ -108,7 +108,7 @@ module Get(Key:Key) = struct
 	| Head ->
 	  { g with head = Some true }
 	| Deletedvclock ->
-	  { g with deletedvclock = Some true })
+	  { g with deletedvclock = Some true }) *)
       ~init:g
       opts
 end
@@ -155,7 +155,7 @@ module Put(Key:Key) (Value:Value) = struct
 	    }
     in
     Core.Std.List.fold_left
-      ~f:(fun p -> function
+      ~f:(fun p -> function _ -> p) (*
 	| Timeout _ ->
 	  p
 	| W n ->
@@ -171,7 +171,7 @@ module Put(Key:Key) (Value:Value) = struct
 	| If_none_match ->
 	  { p with if_none_match = Some true }
 	| Return_head ->
-	  { p with return_head = Some true })
+	  { p with return_head = Some true }) *)
       ~init:p
       opts
 end
@@ -212,7 +212,7 @@ module Delete(Key:Key) = struct
 	    }
     in
     Core.Std.List.fold_left
-      ~f:(fun d -> function
+      ~f:(fun d -> function _ -> d) (*
 	| Timeout _ ->
 	  d
 	| Rw n ->
@@ -226,7 +226,7 @@ module Delete(Key:Key) = struct
 	| Pw n ->
 	  { d with pw = Some (Quorum.to_int32 n) }
 	| Dw n ->
-	  { d with dw = Some (Quorum.to_int32 n) })
+	  { d with dw = Some (Quorum.to_int32 n) }) *)
       ~init:d
       opts
 end
@@ -279,9 +279,9 @@ module Index_search = struct
   end
 
   type t =
-    | Timeout      [@key 1] of int 
-    | Max_results  [@key 2] of int
-    | Continuation [@key 3] of Kontinuation.t [@@deriving Protobuf]
+    | Timeout       of int 
+    | Max_results   of int
+    | Continuation  of Kontinuation.t 
 
   type index_search = { bucket       : string [@key 1]
                       ; index        : string [@key 2]

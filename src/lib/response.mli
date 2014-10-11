@@ -1,4 +1,3 @@
-open Common
 
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
