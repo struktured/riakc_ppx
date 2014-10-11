@@ -1,38 +1,18 @@
 
+module type Key = sig include Protobuf_capable.S end
+module type Value = sig include Protobuf_capable.S end
+
 let option_of_bool = function
   | Some true -> Some true
   | _         -> None
 
 
-
 module Link(Key:Key) = struct
   type t = { bucket : string option [@key 1]
            ; key    : Key.t option [@key 2]
            ; tag    : string option [@key 3]
   } [@@deriving Protobuf]
 end
-
-module Link(Key:Key) = Protobuf_capable.Make (Link (Key))
-
-module Link(Key:Key) = struct
-  type t = { bucket : string option [@key 1]
-           ; key    : Key.t option [@key 2]
-           ; tag    : string option [@key 3]
-  } [@@deriving Protobuf]
-end
-
-module Link(Key:Key) = Protobuf_capable.Make (Link (Key))
-
-
-
-module Link(Key:Key) = struct
-  type t = { bucket : string option [@key 1]
-           ; key    : Key.t option [@key 2]
-           ; tag    : string option [@key 3]
-  } [@@deriving Protobuf]
-end
-
-module Link(Key:Key) = Protobuf_capable.Make (Link (Key))
 
 
 module Pair (Key:Key) (Value:Value) = struct
@@ -40,7 +20,6 @@ module Pair (Key:Key) (Value:Value) = struct
            ; value : Value.t option [@key 2]
 	   } [@@@deriving Protobuf]
 end
-module Pair(Key:Key) (Value:Value) = Protobuf_capable.Make(Pair(Key) (Value))
 
 module Usermeta (Key:Key) (Value:Value) =
 struct
@@ -56,9 +35,6 @@ struct
   let set_key s t = {t with key = s}
   let set_value so t = {t with value = so}
 end
-
-module Usermeta(Key:Key) (Value:Value) = Protobuf_capable.Make(Pair(Key) (Value))
-
 
 
 module Content(Key:Key) (Value:Value) = struct
@@ -79,7 +55,6 @@ module Content(Key:Key) (Value:Value) = struct
   } [@@deriving Protobuf]
 end
 
-module Content(Key:Key) (Value:Value) = Protobuf_capable.Make(Content (Key) (Value))
 
 module Make (Key:Key) (Value:Value) = struct
 module Content = Content (Key) (Value)
@@ -91,7 +66,7 @@ type 'a t = { contents  : Content.t list
 let of_pb contents vclock unchanged =
   { contents  = contents
   ; vclock    = vclock
-  ; unchanged = Option.value ~default:false unchanged
+  ; unchanged = Core.Std.Option.value ~default:false unchanged
   }
 
 let to_pb t = (t.contents, t.vclock)
@@ -103,7 +78,7 @@ let create c =
   }
 
 let contents t        = t.contents
-let content t         = List.hd_exn (t.contents)
+let content t         = Core.Std.List.hd_exn (t.contents)
 let vclock t          = t.vclock
 let unchanged t       = t.unchanged
 
