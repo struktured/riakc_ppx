@@ -48,14 +48,14 @@ module Put : functor (Key:Key) (Value:Value) ->
 sig
   type error = [ `Bad_conn | Response.error ] 
   type t =
-    | Timeout [@key 1] of int 
-    | W       [@key 2] of Quorum.t 
-    | Dw      [@key 3] of Quorum.t 
-    | Pw      [@key 4] of Quorum.t 
-    | Return_body [@key 5]
-    | If_not_modified [@key 6]
-    | If_none_match [@key 7]
-    | Return_head [@key 8] [@@deriving Protobuf]
+    | Timeout of int 
+    | W       of Quorum.t 
+    | Dw      of Quorum.t 
+    | Pw      of Quorum.t 
+    | Return_body 
+    | If_not_modified 
+    | If_none_match 
+    | Return_head 
 
   type put = { bucket          : string [@key 1]
              ; key             : Key.t option [@key 2]
@@ -78,13 +78,13 @@ sig
   type error = [ `Bad_conn | Response.error ]
 
   type t =
-    | Timeout [@key 1] of int
-    | Rw      [@key 2] of Quorum.t
-    | R       [@key 3]  of Quorum.t
-    | W       [@key 4] of Quorum.t
-    | Pr      [@key 5] of Quorum.t
-    | Pw      [@key 6] of Quorum.t
-    | Dw      [@key 7] of Quorum.t [@@deriving Protobuf]
+    | Timeout of int
+    | Rw      of Quorum.t
+    | R       of Quorum.t
+    | W       of Quorum.t
+    | Pr      of Quorum.t
+    | Pw      of Quorum.t
+    | Dw      of Quorum.t 
 
   type delete = { bucket : string [@key 1]
                 ; key    : Key.t [@key 2]
