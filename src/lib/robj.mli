@@ -26,13 +26,13 @@ sig
            ; value : Value.t option [@key 2]
   } [@@deriving Protobuf]
 
-  val create : k:Key.t -> v:Value.t -> t
+  val create : k:Key.t -> v:Value.t option -> t
 
   val key : t ->  Key.t
-  val value : t -> Value.t
+  val value : t -> Value.t option
 
   val set_key : Key.t -> t -> t 
-  val set_value: Value.t -> t -> t
+  val set_value: Value.t option -> t -> t
 
   include Protobuf_capable.S with type t := t
 end

@@ -18,7 +18,7 @@ end
 module Pair (Key:Key) (Value:Value) = struct
         type t = { key   : Key.t [@key 1]
            ; value : Value.t option [@key 2]
-	   } [@@@deriving Protobuf]
+	   } [@@deriving Protobuf]
 end
 
 module Usermeta (Key:Key) (Value:Value) =

@@ -23,6 +23,9 @@ val server_info :
 val bucket_props : t -> string -> (Response.props, [> error | Response.error ]) Deferred.Result.t
 val list_buckets : t -> (string list, [> error | Response.error ]) Deferred.Result.t
 
+module type Key = sig include Protobuf_capable.S end
+module type Value = sig include Protobuf_capable.S end
+
 module Make : functor(Key:Key) (Value:Value) ->
 sig
   type conn = t
@@ -51,7 +54,7 @@ sig
     ?opts:Opts.Put(Key)(Value).t list ->
     ?k:Key.t ->
     [ `No_siblings ] Robj.t ->
-    (([ `Maybe_siblings ] Robj(Key)(Value).t * string option), [> Opts.Put.error ]) Deferred.Result.t
+    (([ `Maybe_siblings ] Robj(Key)(Value).t * Key.t option), [> Opts.Put.error ]) Deferred.Result.t
 
   val delete :
     cache ->

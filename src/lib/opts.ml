@@ -1,15 +1,15 @@
 
-module type Key = sig include Protobuf_capable.S end
+module type Key = sig include Protobuf_capable.S end 
 module type Value = sig include Protobuf_capable.S end
 
 
 module Quorum = struct
   type t =
-    | One [@key 1]
-    | All [@key 2]
-    | Default [@key 3]
-    | Quorum [@key 4]
-    | N [@key 5] of int [@@deriving Protobuf] 
+    | One (*[@key 1] *)
+    | All (*[@key 2] *)
+    | Default (* [@key 3] *)
+    | Quorum (*[@key 4] *)
+    | N (*[@key 5] *) of int (*[@@deriving Protobuf]*) 
 (*
   let one     = Core.Std.Int32.of_int_exn (-2)
   let quorum  = Core.Std.Int32.of_int_exn (-3)
@@ -51,7 +51,9 @@ module Quorum = struct
 	  failwith "of_int32 - n too large"
     end
 *)
-end [@@deriving Protobuf]
+  let to_protobuf t e = ()
+  let from_protobuf d = One
+end 
 
 module Get(Key:Key) = struct
   type error = [ `Bad_conn | `Notfound | Response.error ]
@@ -75,7 +77,9 @@ module Get(Key:Key) = struct
              ; if_modified   : string option [@key 7]
              ; head          : bool option [@key 8]
              ; deletedvclock : bool option [@key 9]
-  } [@@deriving Protobuf]
+  } (* [@@deriving Protobuf] *)
+  let get_to_protobuf t e = ()
+  let get_from_protobuf d = raise (Invalid_argument "unimplemented")
 
   let get_of_opts (opts:t list) ~b ~k =
     let g = { bucket        = b
@@ -135,7 +139,11 @@ module Put(Key:Key) (Value:Value) = struct
              ; if_not_modified : bool option [@key 9]
              ; if_none_match   : bool option [@key 10]
              ; return_head     : bool option [@key 11]
-  } [@@deriving Protobuf]
+  } (*[@@deriving Protobuf]*)
+
+  let put_to_protobuf t e = ()
+  let put_from_protobuf d = raise (Invalid_argument "unimplemented")
+
 
   module Robj = Robj.Make(Key)(Value)
   let put_of_opts opts ~b ~k robj =
@@ -195,7 +203,12 @@ module Delete(Key:Key) = struct
                 ; pr     : int option [@key 7]
                 ; pw     : int option [@key 8]
                 ; dw     : int option [@key 9]
-  } [@@deriving Protobuf]
+  } (*[@@deriving Protobuf]*)
+
+
+  let delete_to_protobuf t e = ()
+  let delete_from_protobuf d = raise (Invalid_argument "unimplemented")
+
 
   let delete_of_opts opts ~b ~k =
     let d = { bucket = b
@@ -241,12 +254,22 @@ module Index_search = struct
     type string_range = { min          : string [@key 1]
                     ; max          : string [@key 2]
                     ; return_terms : bool [@key 3]
-    } [@@deriving Protobuf]
+    } (*[@@deriving Protobuf]*)
 
     type int_range = { min          : int [@key 1]
                     ; max          : int [@key 2]
                     ; return_terms : bool [@key 3]
-    } [@@deriving Protobuf]
+    } (*[@@deriving Protobuf]*)
+
+
+
+  let string_range_to_protobuf t e = ()
+  let string_range_from_protobuf d = raise (Invalid_argument "unimplemented")
+
+  let int_range_to_protobuf t e = ()
+  let int_range_from_protobuf d = raise (Invalid_argument "unimplemented")
+
+
 
 
 
@@ -261,7 +284,11 @@ module Index_search = struct
       | Eq_string    [@key 1] of string
       | Eq_int       [@key 2] of int 
       | Range_string [@key 3] of string_range 
-      | Range_int    [@key 4] of int_range [@@deriving Protobuf]
+      | Range_int    [@key 4] of int_range (*[@@deriving Protobuf]*)
+
+  let to_protobuf t e = ()
+  let from_protobuf d = raise (Invalid_argument "unimplemented")
+
 
     let eq_string key =
       Eq_string key
