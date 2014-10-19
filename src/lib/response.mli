@@ -1,9 +1,15 @@
 
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
+module Result = Core.Std.Result
+
+type 'a t = More of 'a | Done of 'a
 
 
-type error = [`Protobuf_encoder_error]
+type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error ]
+
+val ping         : string -> (unit t, [> error ]) Result.t
+
 type client_id  = string [@@deriving Protobuf]
 type server_info = (string option * string option) [@@deriving Protobuf]
 type list_buckets = string list [@@deriving Protobuf]

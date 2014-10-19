@@ -22,8 +22,8 @@ let rec read_str r pos s =
     | `Eof ->
       Deferred.return (Error `Bad_conn)
 
-let parse_length preamble =
-  Deferred.return (Response.parse_length preamble)
+let parse_length preamble = raise (Invalid_argument "unsupported operation")
+(*  Deferred.return (Response.parse_length preamble) *)
 
 let read_payload r preamble =
   let open Deferred.Result.Monad_infix in

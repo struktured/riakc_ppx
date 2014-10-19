@@ -1,10 +1,23 @@
 module E = Protobuf.Encoder
 module D = Protobuf.Decoder
-type error = [`Protobuf_encoder_error]
 
+module Result = Core.Std.Result
+
+type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error ]
 
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
+
+
+type 'a t = More of 'a | Done of 'a
+
+open Result
+
+let ping = function
+  | "\x02" ->
+    Result.Ok (Done ())
+  | _ ->
+    Error `Bad_payload
 
 
 type list_buckets = string list [@@deriving Protobuf]
