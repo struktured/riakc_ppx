@@ -10,6 +10,7 @@ type t = { r : Reader.t
 	 }
 
 type error = [ `Bad_conn ]
+let f
 
 let rec read_str r pos s =
   Reader.read r ~pos s >>= function
