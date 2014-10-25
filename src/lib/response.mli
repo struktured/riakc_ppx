@@ -60,7 +60,7 @@ module List_keys : sig
   include Protobuf_capable.S with type t:=t 
 end
 
-val list_keys    : string -> (List_keys.t t, [> error ]) Result.t
+val list_keys    : string -> (Keys.t t, [> error ]) Result.t
 val delete       : string -> (unit t, [> error ]) Result.t
 
 module Get : sig
@@ -75,7 +75,7 @@ module Put : sig
 end
 val put          : string -> (([ `Maybe_siblings ] Robj.Make (Key) (Value).t * string option) t, [> error ]) Result.t
 
-
+(*
 module  Index_search : sig
   type t = Keys.t * pair list * string option * bool option 
 end
@@ -87,6 +87,6 @@ val index_search :
 val index_search_stream :
   string ->
   (Index_search.t t, [> error ]) Result.t
-
+*)
 end
 

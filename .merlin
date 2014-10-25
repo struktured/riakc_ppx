@@ -3,5 +3,4 @@ S src/lib
 S src/example
 S src/test
 B _build/lib
-EXT deriving-ocsigen.syntax pa_ounit.syntax pa_js.syntax lwt.syntax ppx_deriving ppx_deriving_protobuf
 
