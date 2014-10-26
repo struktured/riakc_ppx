@@ -20,7 +20,8 @@ val server_info :
   t ->
   ((string option * string option), [> error | Response.error ]) Deferred.Result.t
 
-val bucket_props : t -> string -> (Response.bucket_props, [> error | Response.error ]) Deferred.Result.t
+val bucket_props : t -> string -> (Response.Props.t, [> error | Response.error ]) Deferred.Result.t
+
 val list_buckets : t -> (string list, [> error | Response.error ]) Deferred.Result.t
 
 module type Key = sig include Protobuf_capable.S end
@@ -60,12 +61,13 @@ sig
     ?opts:Opts.Delete(Key).t list ->
     Key.t ->
     (unit, [> Opts.Delete(Key).error ]) Deferred.Result.t
-
+(*
   val index_search :
     cache ->
     ?opts:Opts.Index_search.t list ->
     index:Key.t ->
     Opts.Index_search.Query.t ->
     (Response.Make(Key)(Value).index_search, [> Opts.Index_search.error ]) Deferred.Result.t
+*)
 end
 
