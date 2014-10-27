@@ -1,5 +1,7 @@
-open Core.Std
 open Async.Std
+
+module Result = Core.Std.Result
+module String = Core.Std.String
 
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
@@ -17,10 +19,10 @@ let rec read_str r pos s =
       if (pos + l) <> String.length s then
 	read_str r (pos + l) s
       else
-	Deferred.return (Ok s)
+	Deferred.return (Result.Ok s)
     end
     | `Eof ->
-      Deferred.return (Error `Bad_conn)
+      Deferred.return (Result.Error `Bad_conn)
 
 let parse_length preamble = raise (Invalid_argument "unsupported operation")
 (*  Deferred.return (Response.parse_length preamble) *)
@@ -44,7 +46,7 @@ let rec read_response r f c =
     | Response.Done resp ->
       let open Deferred.Monad_infix in
       c resp >>= fun () ->
-      Deferred.return (Ok ())
+      Deferred.return (Result.Ok ())
 
 let do_request_stream t c g f =
   let open Deferred.Result.Monad_infix in
@@ -57,13 +59,13 @@ let do_request t g f =
   let (r, w) = Pipe.create () in
   let c x    = Pipe.write_without_pushback w x; Deferred.return () in
   do_request_stream t c g f >>= function
-    | Ok () -> begin
+    | Result.Ok () -> begin
       Pipe.close w;
       Pipe.to_list r >>| fun l ->
-      Ok l
+      Result.Ok l
     end
-    | Error err ->
-      Deferred.return (Error err)
+    | Result.Error err ->
+      Deferred.return (Result.Error err)
 
 let gen_consumer w = Pipe.write_without_pushback w |> Deferred.return
 
@@ -72,24 +74,24 @@ let connect ~host ~port =
     Tcp.connect (Tcp.to_host_and_port host port)
   in
   Monitor.try_with connect >>| function
-    | Ok (_s, r, w) ->
-      Ok { r; w }
-    | Error _exn ->
-      Error `Bad_conn
+    | Result.Ok (_s, r, w) ->
+      Result.Ok { r; w }
+    | Result.Error _exn ->
+      Result.Error `Bad_conn
 
 let close t =
   Writer.close t.w >>= fun () ->
-  Deferred.return (Ok ())
+  Deferred.return (Result.Ok ())
 
 let with_conn ~host ~port f =
   connect host port >>= function
-    | Ok c -> begin
+    | Result.Ok c -> begin
       f c    >>= fun r ->
       close c >>= fun _ ->
       Deferred.return r
     end
-    | Error err ->
-      Deferred.return (Error err)
+    | Result.Error err ->
+      Deferred.return (Result.Error err)
 
 let ping t =
   do_request
@@ -97,12 +99,12 @@ let ping t =
     Request.ping
     Response.ping
   >>| function
-    | Ok [()] ->
-      Ok ()
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Result.Ok [()] ->
+      Result.Ok ()
+    | Result.Ok _ ->
+      Result.Error `Wrong_type
+    | Result.Error err ->
+      Result.Error err
 
 let client_id t =
   do_request
@@ -110,12 +112,12 @@ let client_id t =
     Request.client_id
     Response.client_id
   >>| function
-    | Ok [client_id] ->
-      Ok client_id
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Result.Ok [client_id] ->
+      Result.Ok client_id
+    | Result.Ok _ ->
+      Result.Error `Wrong_type
+    | Result.Error err ->
+      Result.Error err
 
 let server_info t =
   do_request
@@ -123,12 +125,12 @@ let server_info t =
     Request.server_info
     Response.server_info
   >>| function
-    | Ok [(node, version)] ->
-      Ok (node, version)
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Result.Ok [(node, version)] ->
+      Result.Ok (node, version)
+    | Result.Ok _ ->
+      Result.Error `Wrong_type
+    | Result.Error err ->
+      Result.Error err
 
 let bucket_props t bucket =
   do_request
@@ -136,12 +138,12 @@ let bucket_props t bucket =
     (Request.bucket_props bucket)
     Response.bucket_props
   >>| function
-    | Ok [props] ->
-      Ok props
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Result.Ok [props] ->
+      Result.Ok props
+    | Result.Ok _ ->
+      Result.Error `Wrong_type
+    | Result.Error err ->
+      Result.Error err
 
 let list_buckets t =
   do_request
@@ -149,12 +151,12 @@ let list_buckets t =
     Request.list_buckets
     Response.list_buckets
   >>| function
-    | Ok [buckets] ->
-      Ok buckets
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Result.Ok [buckets] ->
+      Result.Ok buckets
+    | Result.Ok _ ->
+      Result.Error `Wrong_type
+    | Result.Error err ->
+      Result.Error err
 
 module Make(Key:Key) (Value:Value) =
 struct 
@@ -169,10 +171,10 @@ struct
   do_request_stream
     cache.conn req_list_keys 
   >>| function
-    | Ok keys ->
-      Ok (List.concat (List.map ~f:(fun s -> (Protobuf.Decoder.decode_exn Key.t_from_protobuf s)) keys)) 
-    | Error err ->
-      Error err
+    | Result.Ok keys ->
+      Result.Ok (List.concat (List.map ~f:(fun s -> (Protobuf.Decoder.decode_exn Key.from_protobuf s)) keys)) 
+    | Result.Error err ->
+      Result.Error err
 
 let get t ?(opts = []) ~b k =
   do_request
@@ -180,16 +182,16 @@ let get t ?(opts = []) ~b k =
     (Req.get (Get.get_of_opts opts ~b ~k))
     Resp.get
   >>| function
-    | Ok [robj] -> begin
+    | Result.Ok [robj] -> begin
       if Robj.contents robj = [] && Robj.vclock robj = None then
-	Error `Notfound
+	Result.Error `Notfound
       else
-	Ok robj 
+	Result.Ok robj 
     end
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Result.Ok _ ->
+      Result.Error `Wrong_type
+    | Result.Error err ->
+      Result.Error err
 
 let put t ?(opts = []) ~b ?k robj =
   do_request
@@ -197,12 +199,12 @@ let put t ?(opts = []) ~b ?k robj =
     (Request.put (Opts.Put.put_of_opts opts ~b ~k robj))
     Response.put
   >>| function
-    | Ok [(robj, key)] ->
-      Ok (robj, key)
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Result.Ok [(robj, key)] ->
+      Result.Ok (robj, key)
+    | Result.Ok _ ->
+      Result.Error `Wrong_type
+    | Result.Error err ->
+      Result.Error err
 
 let delete t ?(opts = []) ~b k =
   do_request
@@ -210,12 +212,12 @@ let delete t ?(opts = []) ~b k =
     (Request.delete (Opts.Delete.delete_of_opts opts ~b ~k))
     Response.delete
   >>| function
-    | Ok [()] ->
-      Ok ()
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Result.Ok [()] ->
+      Result.Ok ()
+    | Result.Ok _ ->
+      Result.Error `Wrong_type
+    | Result.Error err ->
+      Result.Error err
 (*
 let index_search t ?(opts = []) ~b ~index query_type =
   let idx_s =
