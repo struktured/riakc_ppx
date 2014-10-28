@@ -11,21 +11,21 @@ module Link(Key:Key) = struct
   type t = { bucket : string option [@key 1]
            ; key    : Key.t option [@key 2]
            ; tag    : string option [@key 3]
-  } [@@deriving Protobuf]
+  } [@@deriving protobuf]
 end
 
 
 module Pair (Key:Key) (Value:Value) = struct
         type t = { key   : Key.t [@key 1]
            ; value : Value.t option [@key 2]
-	   } [@@deriving Protobuf]
+	   } [@@deriving protobuf]
 end
 
 module Usermeta (Key:Key) (Value:Value) =
 struct
   type t = { key : Key.t [@key 1]
            ; value : Value.t option [@key 2]
-  } [@@deriving Protobuf]
+  } [@@deriving protobuf]
 
   let create ~k ~v = { key = k; value = v }
 
@@ -52,7 +52,7 @@ module Content(Key:Key) (Value:Value) = struct
            ; usermeta         : Usermeta.t list [@key 9]
            ; indices          : Pair.t list [@key 10]
            ; deleted          : bool option [@key 11]
-  } [@@deriving Protobuf]
+  } [@@deriving protobuf]
 end
 
 

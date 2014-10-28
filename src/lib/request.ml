@@ -89,7 +89,7 @@ type decorated_index_search = {
     stream : bool [@key 8];
     max_results: int option [@key 9];
     cont: bytes option [@key 10]
-  } [@@deriving Protobuf]
+  } [@@deriving protobuf]
 
 
 let index_search ~stream idx_s () =

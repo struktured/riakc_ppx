@@ -27,6 +27,7 @@ val list_buckets : t -> (string list, [> error | Response.error ]) Deferred.Resu
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
 
+
 module Make : functor(Key:Key) (Value:Value) ->
 sig
   type conn = t
@@ -35,7 +36,7 @@ sig
   val create: conn:conn -> bucket:string -> cache
 
   val list_keys :
-    t ->
+    cache ->
     (Key.t list, [> error | Response.error ]) Deferred.Result.t
 
   val list_keys_stream :

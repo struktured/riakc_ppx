@@ -9,7 +9,7 @@ module Quorum = struct
     | All (*[@key 2] *)
     | Default (* [@key 3] *)
     | Quorum (*[@key 4] *)
-    | N (*[@key 5] *) of int (*[@@deriving Protobuf]*) 
+    | N (*[@key 5] *) of int (*[@@deriving protobuf]*) 
 (*
   let one     = Core.Std.Int32.of_int_exn (-2)
   let quorum  = Core.Std.Int32.of_int_exn (-3)
@@ -77,7 +77,7 @@ module Get(Key:Key) = struct
              ; if_modified   : string option [@key 7]
              ; head          : bool option [@key 8]
              ; deletedvclock : bool option [@key 9]
-  } (* [@@deriving Protobuf] *)
+  } (* [@@deriving protobuf] *)
   let get_to_protobuf t e = ()
   let get_from_protobuf d = raise (Invalid_argument "unimplemented")
 
@@ -139,7 +139,7 @@ module Put(Key:Key) (Value:Value) = struct
              ; if_not_modified : bool option [@key 9]
              ; if_none_match   : bool option [@key 10]
              ; return_head     : bool option [@key 11]
-  } (*[@@deriving Protobuf]*)
+  } (*[@@deriving protobuf]*)
 
   let put_to_protobuf t e = ()
   let put_from_protobuf d = raise (Invalid_argument "unimplemented")
@@ -203,7 +203,7 @@ module Delete(Key:Key) = struct
                 ; pr     : int option [@key 7]
                 ; pw     : int option [@key 8]
                 ; dw     : int option [@key 9]
-  } (*[@@deriving Protobuf]*)
+  } (*[@@deriving protobuf]*)
 
 
   let delete_to_protobuf t e = ()
@@ -254,12 +254,12 @@ module Index_search = struct
     type string_range = { min          : string [@key 1]
                     ; max          : string [@key 2]
                     ; return_terms : bool [@key 3]
-    } (*[@@deriving Protobuf]*)
+    } (*[@@deriving protobuf]*)
 
     type int_range = { min          : int [@key 1]
                     ; max          : int [@key 2]
                     ; return_terms : bool [@key 3]
-    } (*[@@deriving Protobuf]*)
+    } (*[@@deriving protobuf]*)
 
 
 
@@ -284,7 +284,7 @@ module Index_search = struct
       | Eq_string    [@key 1] of string
       | Eq_int       [@key 2] of int 
       | Range_string [@key 3] of string_range 
-      | Range_int    [@key 4] of int_range (*[@@deriving Protobuf]*)
+      | Range_int    [@key 4] of int_range (*[@@deriving protobuf]*)
 
   let to_protobuf t e = ()
   let from_protobuf d = raise (Invalid_argument "unimplemented")
@@ -305,7 +305,7 @@ module Index_search = struct
 
 
   module Kontinuation = struct
-    type t = string [@@deriving Protobuf]
+    type t = string [@@deriving protobuf]
 
     let of_string s = s
     let to_string t = t
@@ -322,7 +322,7 @@ module Index_search = struct
                       ; max_results  : int option [@key 4]
                       ; continuation : Kontinuation.t option [@key 5]
                       ; timeout      : int option [@key 6]
-  } [@@deriving Protobuf]
+  } [@@deriving protobuf]
 
   let index_search_of_opts opts ~b ~index ~query_type =
     let idx_s = { bucket       = b

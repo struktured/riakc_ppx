@@ -13,6 +13,7 @@ module Ping : sig
   include Protobuf_capable.S with type t:=t
 end
 
+val parse_length : string -> (int, [> error ]) Result.t
 
 val ping : string -> (Ping.t t, [> error ]) Result.t
 
@@ -48,7 +49,7 @@ val bucket_props : string -> (Props.t t, [> error ]) Result.t
 module Make : functor (Key:Key) (Value:Value) ->
 sig
 
-type pair = (Key.t * string option) [@@deriving Protobuf]
+type pair = (Key.t * string option) [@@deriving protobuf]
 
 module Keys : sig
   type t = Key.t list 

@@ -151,7 +151,7 @@ let list_buckets t =
     Request.list_buckets
     Response.list_buckets
   >>| function
-    | Result.Ok [buckets] ->
+      Result.Ok [buckets] ->
       Result.Ok buckets
     | Result.Ok _ ->
       Result.Error `Wrong_type
@@ -165,16 +165,14 @@ struct
   module Resp = Response.Make(Key)(Value)
   module Req = Request.Make(Key)(Value)
   module Get = Opts.Get(Key)
-
+  module Robj_kv = Robj.Make(Key)(Value)
+    
   let list_keys_stream cache consumer =
-  let req_list_keys = Request.list_keys cache.bucket () in
   do_request_stream
-    cache.conn req_list_keys 
-  >>| function
-    | Result.Ok keys ->
-      Result.Ok (List.concat (List.map ~f:(fun s -> (Protobuf.Decoder.decode_exn Key.from_protobuf s)) keys)) 
-    | Result.Error err ->
-      Result.Error err
+    cache.conn 
+    consumer 
+    (Request.list_keys cache.bucket)
+    Resp.list_keys
 
 let get t ?(opts = []) ~b k =
   do_request
@@ -183,7 +181,7 @@ let get t ?(opts = []) ~b k =
     Resp.get
   >>| function
     | Result.Ok [robj] -> begin
-      if Robj.contents robj = [] && Robj.vclock robj = None then
+      if Robj_kv.contents robj = [] && Robj_kv.vclock robj = None then
 	Result.Error `Notfound
       else
 	Result.Ok robj 

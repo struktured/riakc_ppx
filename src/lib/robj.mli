@@ -7,7 +7,7 @@ sig
   type t = { bucket : string option [@key 1]
            ; key    : Key.t option [@key 2]
            ; tag    : string option [@key 3]
-           } [@@deriving Protobuf]
+           } [@@deriving protobuf]
 include Protobuf_capable.S with type t := t
 end
 
@@ -15,7 +15,7 @@ module Pair : functor(Key:Key) (Value:Value) ->
 sig
   type t = { key: Key.t  [@key 1]
   ; value : Value.t option [@key 2]
-  } [@@deriving Protobuf]
+  } [@@deriving protobuf]
   include Protobuf_capable.S with type t := t
 end
 
@@ -24,7 +24,7 @@ module Usermeta : functor(Key:Key) (Value:Value) ->
 sig
   type t = { key : Key.t [@key 1]
            ; value : Value.t option [@key 2]
-  } [@@deriving Protobuf]
+  } [@@deriving protobuf]
 
   val create : k:Key.t -> v:Value.t option -> t
 
@@ -51,7 +51,7 @@ sig
   ; usermeta         : Usermeta(Key) (Value).t list [@key 9]
   ; indices          : Pair(Key) (Value).t list [@key 10]
   ; deleted          : bool option [@key 11]
-  } [@@deriving Protobuf]
+  } [@@deriving protobuf]
 include Protobuf_capable.S with type t := t
 end
 
