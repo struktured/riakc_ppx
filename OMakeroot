@@ -66,7 +66,7 @@ NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
 BYTE_ENABLED = $(OCAMLC_EXISTS)
 
 OCAMLFLAGS = -bin-annot -annot -warn-error P -thread
-OCAMLCFLAGS = -package ppx_deriving 
+OCAMLCFLAGS = 
 OCAML_NATIVE_LINK_FLAGS =
 #OCAMLFINDFLAGS = -syntax camlp4o
 OCAMLPACKS[] = $(LIB_PACKAGES)
