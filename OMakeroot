@@ -26,7 +26,7 @@ LIB_NAME = $(PROJECT)
 LIB_DESCRIPTION = Riak client.
 LIB_MODULES[] =
   $(removesuffix $(basename $(ls src/lib/*.ml)))
-LIB_PACKAGES = core async async_unix ppx_deriving ppx_deriving.api ppx_deriving_protobuf ppx_deriving_protobuf.runtime bitstring
+LIB_PACKAGES = core async async_unix ppx_deriving ppx_deriving_protobuf ppx_deriving_protobuf.runtime bitstring
 
 EXAMPLES[] =
   $(removesuffix $(basename $(ls src/examples/*.ml)))
@@ -66,7 +66,7 @@ NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
 BYTE_ENABLED = $(OCAMLC_EXISTS)
 
 OCAMLFLAGS = -bin-annot -annot -warn-error P -thread
-OCAMLCFLAGS = -ppx 'ocamlfind ppx_deriving/ppx_deriving' 
+OCAMLCFLAGS = -package ppx_deriving 
 OCAML_NATIVE_LINK_FLAGS =
 #OCAMLFINDFLAGS = -syntax camlp4o
 OCAMLPACKS[] = $(LIB_PACKAGES)
