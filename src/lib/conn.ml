@@ -219,10 +219,10 @@ let put cache ?(opts = []) ?k robj =
     | Result.Error err ->
       Result.Error err
 
-let delete t ?(opts = []) ~b k =
+let delete cache ?(opts = []) k =
   do_request
-    t
-    (Req.delete (Delete.delete_of_opts opts ~b ~k))
+    cache.conn
+    (Req.delete (Delete.delete_of_opts opts ~b:cache.bucket ~k))
     Resp.delete
   >>| function
     | Result.Ok [()] ->
