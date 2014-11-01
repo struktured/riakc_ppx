@@ -3,8 +3,8 @@ module type Value = sig include Protobuf_capable.S end
 module Result = Core.Std.Result
 
 type 'a t = More of 'a | Done of 'a
+type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `Unknown_type | `Wrong_type ]
 
-type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error ]
 
 let error payload =
   failwith "nyi"
@@ -176,6 +176,7 @@ type index_search = { keys         : Key.t list (*[@key 1]*)
 } (*[@@deriving protobuf]*)
 
 end
+
 (*
 let index_search payload = let open Index_search in 
    let open Result.Monad_infix in

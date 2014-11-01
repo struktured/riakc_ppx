@@ -10,9 +10,8 @@ module type Value = sig include Protobuf_capable.S end
 type t = { r : Reader.t
 	 ; w : Writer.t
 	 }
-
-type error = [ `Bad_conn | `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `Unknown | `Wrong_type ]
-
+type error = [ `Bad_conn ]
+  
 let rec read_str r pos s = 
   Reader.read r ~pos s >>= function
     | `Ok l -> begin
@@ -30,7 +29,7 @@ let parse_length preamble = raise (Invalid_argument "unsupported operation")
 let read_payload r preamble =
   let open Deferred.Result.Monad_infix in
   parse_length preamble >>= fun resp_len ->
-  let payload = String.create resp_len in
+  let payload = Bytes.create resp_len in
   read_str r 0 payload
 
 let rec read_response r f c =
@@ -53,6 +52,7 @@ let do_request_stream t c g f =
   Deferred.return (g ()) >>= fun request ->
   Writer.write t.w request;
   read_response t.r f c
+
 
 let do_request t g f =
   let open Deferred.Monad_infix in
@@ -189,10 +189,10 @@ struct
       Result.Error err
 
 
-let get t ?(opts = []) ~b k =
+let get cache ?(opts = []) k =
   do_request
-    t
-    (Req.get (Get.get_of_opts opts ~b ~k))
+    cache.conn
+    (Req.get (Get.get_of_opts opts ~b:cache.bucket ~k))
     Resp.get
   >>| function
     | Result.Ok [robj] -> begin

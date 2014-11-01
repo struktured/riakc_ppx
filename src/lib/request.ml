@@ -2,6 +2,7 @@
 
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
+module Result = Core.Std.Result
 
 module E = Protobuf.Encoder
 
@@ -15,37 +16,37 @@ let wrap_request (mc:'a) s =
   Bytes.set preamble_mc 3 (Core.Std.Char.of_int_exn (l land 0xff));
   Bytes.set preamble_mc 4 mc;
   preamble_mc ^ s
-type error = [`Unknown]
+type error = [`Unknown_type]
 let ping () =
-  Core.Std.Result.Ok (wrap_request '\x01' "")
+  Result.Ok (wrap_request '\x01' "")
 
 let client_id () =
-  Core.Std.Result.Ok (wrap_request '\x03' "")
+  Result.Ok (wrap_request '\x03' "")
 
 let server_info () =
-  Core.Std.Result.Ok (wrap_request '\x07' "")
+  Result.Ok (wrap_request '\x07' "")
 
 let bucket_props bucket () =
-  let open Core.Std.Result.Monad_infix in
+  let open Result.Monad_infix in
   let e = E.create () in
   E.bytes bucket e;
-  Core.Std.Result.Ok (wrap_request '\x13' (E.to_string e))
+  Result.Ok (wrap_request '\x13' (E.to_string e))
 
 let list_buckets () =
-   Core.Std.Result.Ok (wrap_request '\x0F' "")
+   Result.Ok (wrap_request '\x0F' "")
 
 let list_keys bucket () =
-  let open Core.Std.Result.Monad_infix in
+  let open Result.Monad_infix in
   let e = E.create () in
   E.bytes bucket e; 
-  Core.Std.Result.Ok (wrap_request '\x11' (E.to_string e))
+  Result.Ok (wrap_request '\x11' (E.to_string e))
 
 module Make(Key:Key) (Value:Value) = 
   struct
 let get g () =
   let module Get = Opts.Get(Key) in
   let open Get in 
-  let open Core.Std.Result.Monad_infix in
+  let open Result.Monad_infix in
   let e = E.create () in 
   Get.get_to_protobuf g e;
   Core.Std.Ok (wrap_request '\x09' (E.to_string e))
@@ -61,7 +62,7 @@ let put p () =
 let delete d () =
   let module Delete = Opts.Delete (Key) in
   let open Delete in
-  let open Core.Std.Result.Monad_infix in
+  let open Result.Monad_infix in
   let e = E.create () in
   Delete.delete_to_protobuf d e; 
 (*  E.bytes     b 1 d.bucket >>= fun () ->
@@ -76,7 +77,7 @@ let delete d () =
   E.int32_opt b 8 d.pw     >>= fun () ->
   E.int32_opt b 9 d.dw     >>= fun () ->
   *) 
-  Core.Std.Result.Ok (wrap_request '\x0D' (E.to_string e))
+  Result.Ok (wrap_request '\x0D' (E.to_string e))
 
 type decorated_index_search = {
     bucket: bytes [@key 1];
@@ -161,7 +162,7 @@ let index_search ~stream idx_s () =
   let rt   = determine_rt    idx_s in
   let cont = determine_cont  idx_s in
   let e    = E.create () in
-  let open Core.Std.Result.Monad_infix in
+  let open Result.Monad_infix in
   let decorated = {bucket=idx_s.bucket;idx;key;min;max;rt;cont;stream;max_results=idx_s.max_results;query_type=idx_s.query_type} in
   decorated_index_search_to_protobuf decorated e;
   (*E.bytes     b  1 idx_s.bucket                     >>= fun () ->
@@ -174,6 +175,6 @@ let index_search ~stream idx_s () =
   E.bool      b  8 stream                           >>= fun () ->
   E.int32_opt b  9 idx_s.max_results                >>= fun () ->
   E.bytes_opt b 10 cont                             >>= fun () ->
-  *)Core.Std.Result.Ok (wrap_request '\x19' (E.to_string e))
+  *)Result.Ok (wrap_request '\x19' (E.to_string e))
 end
 
