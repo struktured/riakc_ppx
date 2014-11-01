@@ -52,15 +52,12 @@ let parse_mc s =
       Result.Error `Incomplete_payload
  
 
-
 let run mc mc_payload f =
   let open Result.Monad_infix in
   parse_mc mc_payload >>= function
     | (p_mc, payload) when p_mc = mc -> begin
-      (*P.State.create payload >>= fun s -> *)
       let decoder = Protobuf.Decoder.of_string (Bitstring.string_of_bitstring payload) in
       let r = f decoder in
-(*      P.run f s              >>= fun (r, _) -> *)
       Result.Ok r
     end
     | _ ->

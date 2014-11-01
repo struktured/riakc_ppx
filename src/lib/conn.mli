@@ -54,8 +54,8 @@ sig
     cache ->
     ?opts:Opts.Put(Key)(Value).t list ->
     ?k:Key.t ->
-    [ `No_siblings ] Robj.Make(Key)(Value).t ->
-    (([ `Maybe_siblings ] Robj.Make(Key)(Value).t * Key.t option), [> Opts.Put(Key)(Value).error ]) Deferred.Result.t
+    [ `No_siblings ] Robj.Make(Key)(Value).t -> (* TODO what is the string option for here ?? *) 
+    (([ `Maybe_siblings ] Robj.Make(Key)(Value).t * string option), [> Opts.Put(Key)(Value).error ]) Deferred.Result.t
 
   val delete :
     cache ->

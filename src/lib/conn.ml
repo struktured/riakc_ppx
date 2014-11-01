@@ -206,10 +206,10 @@ let get cache ?(opts = []) k =
     | Result.Error err ->
       Result.Error err
 
-let put t ?(opts = []) ~b ?k robj =
+let put cache ?(opts = []) ?k robj =
   do_request
-    t
-    (Req.put (Put.put_of_opts opts ~b ~k robj))
+    cache.conn
+    (Req.put (Put.put_of_opts opts ~b:cache.bucket ~k robj))
     Resp.put
   >>| function
     | Result.Ok [(robj, key)] ->
