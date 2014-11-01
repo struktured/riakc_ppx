@@ -168,12 +168,26 @@ struct
   module Robj_kv = Robj.Make(Key)(Value)
   module Put = Opts.Put(Key)(Value)
   module Delete = Opts.Delete(Key)
+  
+  let create ~conn ~bucket = {conn;bucket}
   let list_keys_stream cache consumer =
   do_request_stream
     cache.conn 
     consumer 
     (Request.list_keys cache.bucket)
     Resp.list_keys
+
+  let list_keys cache =
+  do_request
+    cache.conn
+    (Request.list_keys cache.bucket)
+    Resp.list_keys
+  >>| function
+    | Result.Ok keys ->
+      Result.Ok (List.concat keys)
+    | Result.Error err ->
+      Result.Error err
+
 
 let get t ?(opts = []) ~b k =
   do_request
