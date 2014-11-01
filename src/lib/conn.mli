@@ -3,7 +3,7 @@ open Async.Std
 
 type t
 
-type error = [ `Bad_conn ]
+type error= [ `Bad_conn | `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `Unknown | `Wrong_type ]
 
 val connect   : host:string -> port:int -> (t, [> error ]) Deferred.Result.t
 val close     : t -> (unit, [> error ]) Deferred.Result.t

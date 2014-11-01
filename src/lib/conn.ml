@@ -11,9 +11,9 @@ type t = { r : Reader.t
 	 ; w : Writer.t
 	 }
 
-type error = [ `Bad_conn ]
+type error = [ `Bad_conn | `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `Unknown | `Wrong_type ]
 
-let rec read_str r pos s =
+let rec read_str r pos s = 
   Reader.read r ~pos s >>= function
     | `Ok l -> begin
       if (pos + l) <> String.length s then
@@ -166,7 +166,8 @@ struct
   module Req = Request.Make(Key)(Value)
   module Get = Opts.Get(Key)
   module Robj_kv = Robj.Make(Key)(Value)
-    
+  module Put = Opts.Put(Key)(Value)
+  module Delete = Opts.Delete(Key)
   let list_keys_stream cache consumer =
   do_request_stream
     cache.conn 
@@ -194,8 +195,8 @@ let get t ?(opts = []) ~b k =
 let put t ?(opts = []) ~b ?k robj =
   do_request
     t
-    (Request.put (Opts.Put.put_of_opts opts ~b ~k robj))
-    Response.put
+    (Req.put (Put.put_of_opts opts ~b ~k robj))
+    Resp.put
   >>| function
     | Result.Ok [(robj, key)] ->
       Result.Ok (robj, key)
@@ -207,8 +208,8 @@ let put t ?(opts = []) ~b ?k robj =
 let delete t ?(opts = []) ~b k =
   do_request
     t
-    (Request.delete (Opts.Delete.delete_of_opts opts ~b ~k))
-    Response.delete
+    (Req.delete (Delete.delete_of_opts opts ~b ~k))
+    Resp.delete
   >>| function
     | Result.Ok [()] ->
       Result.Ok ()
