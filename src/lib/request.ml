@@ -7,13 +7,13 @@ module E = Protobuf.Encoder
 
 let wrap_request (mc:'a) s =
   (* Add 1 for the mc *)
-  let l = String.length s + 1 in
-  let preamble_mc = String.create 5 in
-  preamble_mc.[0] <- Core.Std.Char.of_int_exn ((l lsr 24) land 0xff);
-  preamble_mc.[1] <- Core.Std.Char.of_int_exn ((l lsr 16) land 0xff);
-  preamble_mc.[2] <- Core.Std.Char.of_int_exn ((l lsr 8) land 0xff);
-  preamble_mc.[3] <- Core.Std.Char.of_int_exn (l land 0xff);
-  preamble_mc.[4] <- mc;
+  let l = Bytes.length s + 1 in
+  let preamble_mc = Bytes.create 5 in
+  Bytes.set preamble_mc 0 (Core.Std.Char.of_int_exn ((l lsr 24) land 0xff));
+  Bytes.set preamble_mc 1 (Core.Std.Char.of_int_exn ((l lsr 16) land 0xff));
+  Bytes.set preamble_mc 2 (Core.Std.Char.of_int_exn ((l lsr 8) land 0xff));
+  Bytes.set preamble_mc 3 (Core.Std.Char.of_int_exn (l land 0xff));
+  Bytes.set preamble_mc 4 mc;
   preamble_mc ^ s
 type error = [`Unknown]
 let ping () =
