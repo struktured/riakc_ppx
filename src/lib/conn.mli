@@ -23,52 +23,12 @@ val server_info :
 val bucket_props : t -> string -> (Response.Props.t, [> error | Response.error ]) Deferred.Result.t
 
 val list_buckets : t -> (string list, [> error | Response.error ]) Deferred.Result.t
+val do_request  : t -> (unit -> (string, [> `Bad_conn ] as 'a) Deferred.Result.t) ->
+  (String.t -> ('b Response.t, 'a) Deferred.Result.t) -> ('b list, 'a) Result.t Deferred.t
 
-module type Key = sig include Protobuf_capable.S end
-module type Value = sig include Protobuf_capable.S end
-
-
-module Make : functor(Key:Key) (Value:Value) ->
-sig
-  type conn = t
-  type cache (*{conn:conn;bucket:string} *)
-
-  val create: conn:conn -> bucket:string -> cache
-
-  val list_keys :
-    cache ->
-    (Key.t list, [> error | Response.error ]) Deferred.Result.t
-
-  val list_keys_stream :
-    cache ->
-    (Key.t list -> unit Deferred.t) ->
-    (unit, [> error | Response.error ]) Deferred.Result.t
-
-  val get :
-    cache ->
-    ?opts:Opts.Get(Key).t list ->
-    Key.t ->
-    ([ `Maybe_siblings ] Robj.Make(Key)(Value).t, [> Opts.Get(Key).error ]) Deferred.Result.t
-
-  val put :
-    cache ->
-    ?opts:Opts.Put(Key)(Value).t list ->
-    ?k:Key.t ->
-    [ `No_siblings ] Robj.Make(Key)(Value).t -> (* TODO what is the string option for here ?? *) 
-    (([ `Maybe_siblings ] Robj.Make(Key)(Value).t * string option), [> Opts.Put(Key)(Value).error ]) Deferred.Result.t
-
-  val delete :
-    cache ->
-    ?opts:Opts.Delete(Key).t list ->
-    Key.t ->
-    (unit, [> Opts.Delete(Key).error ]) Deferred.Result.t
-(*
-  val index_search :
-    cache ->
-    ?opts:Opts.Index_search.t list ->
-    index:Key.t ->
-    Opts.Index_search.Query.t ->
-    (Response.Make(Key)(Value).index_search, [> Opts.Index_search.error ]) Deferred.Result.t
-*)
-end
-
+val do_request_stream  : 
+  t -> 
+  ('a -> unit Deferred.t) -> 
+  (unit -> (string, [> `Bad_conn ] as 'b) Deferred.Result.t) ->
+  (String.t -> ('a Response.t, 'b) Deferred.Result.t) ->
+  (unit, 'b) Deferred.Result.t

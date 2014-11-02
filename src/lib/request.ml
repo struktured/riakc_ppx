@@ -57,7 +57,7 @@ let put p () =
   let open Put in
   let e = E.create () in
   Put.put_to_protobuf p e;
-  Core.Std.Ok (wrap_request '\x0E' (E.to_string e))
+  Result.Ok (wrap_request '\x0E' (E.to_string e))
 
 let delete d () =
   let module Delete = Opts.Delete (Key) in
