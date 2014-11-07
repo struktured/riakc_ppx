@@ -8,6 +8,12 @@ module Result = Core.Std.Result
 
 module Make : functor(Key:Key) (Value:Value) ->
 sig
+  module Get : module type of Opts.Get(Key) 
+  module Robj : module type of Robj.Make(Key)(Value)
+  module Content : module type of Robj.Content
+  module Put : module type of Opts.Put(Key)(Value)
+  module Delete : module type of Opts.Delete(Key)
+  
   type conn = Conn.t
   type t  (*{conn:conn;bucket:string} *)
 
@@ -24,22 +30,22 @@ sig
 
   val get :
     t ->
-    ?opts:Opts.Get(Key).t list ->
+    ?opts:Get.t list ->
     Key.t ->
-    ([ `Maybe_siblings ] Robj.Make(Key)(Value).t, [> Opts.Get(Key).error ]) Deferred.Result.t
+    ([ `Maybe_siblings ] Robj.t, [> Get.error ]) Deferred.Result.t
 
   val put :
     t ->
-    ?opts:Opts.Put(Key)(Value).t list ->
+    ?opts:Put.t list ->
     ?k:Key.t ->
-    [ `No_siblings ] Robj.Make(Key)(Value).t -> (* TODO what is the string option for here ?? *) 
-    (([ `Maybe_siblings ] Robj.Make(Key)(Value).t * string option), [> Opts.Put(Key)(Value).error ]) Deferred.Result.t
+    [ `No_siblings ] Robj.t -> (* TODO what is the string option for here ?? *) 
+    (([ `Maybe_siblings ] Robj.t * string option), [> Put.error ]) Deferred.Result.t
 
   val delete :
     t ->
-    ?opts:Opts.Delete(Key).t list ->
+    ?opts:Delete.t list ->
     Key.t ->
-    (unit, [> Opts.Delete(Key).error ]) Deferred.Result.t
+    (unit, [> Delete.error ]) Deferred.Result.t
 (*
   val index_search :
     t ->

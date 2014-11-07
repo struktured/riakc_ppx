@@ -12,6 +12,19 @@ module State = struct
   let create () = ()
 end
 
+
+module String  = 
+struct 
+  include String
+  let from_protobuf (d:Protobuf.Decoder.t) :t = raise (Invalid_argument "unimplemented")
+  let to_protobuf (t:t) (e:Protobuf.Encoder.t) = raise (Invalid_argument "unimplemented")
+end
+
+
+module StringCache = Cache.Make(String)(String)
+
+module Robj_kv = Robj.Make(String)(String)
+
 module Rand = struct
   let lowercase = "abcdefghijklmnopqrstuvwxyz"
   let alpha     = lowercase ^ String.uppercase lowercase
@@ -55,11 +68,10 @@ let list_buckets_test c =
   Deferred.return (Ok ())
 
 let list_keys_test c =
-  let b = Sys.argv.(3) in
-  Rconn.list_keys c b >>= fun keys1 ->
+  StringCache.list_keys c >>= fun keys1 ->
   let robj =
-    Robj.create
-      (Robj.Content.create "foobar")
+    Robj_kv.create
+      (StringCache.Content.create "foobar")
   in
   Rconn.put c ~b ~k:(Rand.key 10) robj >>= fun _ ->
   Rconn.list_keys c b >>= fun keys2 ->

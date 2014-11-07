@@ -10,26 +10,29 @@ module Make(Key:Key) (Value:Value) =
 struct 
   type conn = Conn.t 
   type t = {conn:conn;bucket:string} 
-  module Resp = Response.Make(Key)(Value)
-  module Req = Request.Make(Key)(Value)
+
+  module Response = Response.Make(Key)(Value)
+  module Old_Request = Request
+  module Request = Request.Make(Key)(Value)
   module Get = Opts.Get(Key)
-  module Robj_kv = Robj.Make(Key)
+
+  module Robj = Robj.Make(Key)(Value)
+  module Content = Robj.Content
   module Put = Opts.Put(Key)(Value)
   module Delete = Opts.Delete(Key)
-  
-  let create ~conn ~bucket = {conn;bucket}
+ let create ~conn ~bucket = {conn;bucket}
   let list_keys_stream cache consumer =
   Conn.do_request_stream
     cache.conn 
     consumer 
-    (Request.list_keys cache.bucket)
-    Resp.list_keys
+    (Old_Request.list_keys cache.bucket)
+    Response.list_keys
 
   let list_keys cache =
   Conn.do_request
     cache.conn
-    (Request.list_keys cache.bucket)
-    Resp.list_keys
+    (Old_Request.list_keys cache.bucket)
+    Response.list_keys
   >>| function
     | Result.Ok keys ->
       Result.Ok (List.concat keys)
@@ -40,11 +43,11 @@ struct
 let get cache ?(opts = []) k =
   Conn.do_request
     cache.conn
-    (Req.get (Get.get_of_opts opts ~b:cache.bucket ~k))
-    Resp.get
+    (Request.get (Get.get_of_opts opts ~b:cache.bucket ~k))
+    Response.get
   >>| function
     | Result.Ok [robj] -> begin
-      if Robj_kv.contents robj = [] && Robj_kv.vclock robj = None then
+      if Robj.contents robj = [] && Robj.vclock robj = None then
 	Result.Error `Notfound
       else
 	Result.Ok robj 
@@ -57,8 +60,8 @@ let get cache ?(opts = []) k =
 let put cache ?(opts = []) ?k robj =
   Conn.do_request
     cache.conn
-    (Req.put (Put.put_of_opts opts ~b:cache.bucket ~k robj))
-    Resp.put
+    (Request.put (Put.put_of_opts opts ~b:cache.bucket ~k robj))
+    Response.put
   >>| function
     | Result.Ok [(robj, key)] ->
       Result.Ok (robj, key)
@@ -70,8 +73,8 @@ let put cache ?(opts = []) ?k robj =
 let delete cache ?(opts = []) k =
   Conn.do_request
     cache.conn
-    (Req.delete (Delete.delete_of_opts opts ~b:cache.bucket ~k))
-    Resp.delete
+    (Request.delete (Delete.delete_of_opts opts ~b:cache.bucket ~k))
+    Response.delete
   >>| function
     | Result.Ok [()] ->
       Result.Ok ()

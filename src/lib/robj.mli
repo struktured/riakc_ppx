@@ -57,22 +57,23 @@ end
 
 module Make : functor(Key:Key) (Value:Value) ->
 sig
+  module Content : module type of Content(Key)(Value)
   type 'a t 
   val of_pb :
-    Content (Key) (Value).t list ->
+    Content.t list ->
     string option ->
     bool option ->
     [ `Maybe_siblings ] t
 
-  val to_pb : 'a t -> (Content (Key) (Value).t list * string option)
+  val to_pb : 'a t -> (Content.t list * string option)
 
-  val create       : Content (Key) (Value).t -> [ `No_siblings ] t
-  val contents     : 'a t -> Content (Key) (Value).t list
-  val content      : [ `No_siblings ] t -> Content (Key) (Value).t
+  val create       : Content.t -> [ `No_siblings ] t
+  val contents     : 'a t -> Content.t list
+  val content      : [ `No_siblings ] t -> Content.t
   val vclock       : 'a t -> string option
   val unchanged    : 'a t -> bool
 
-  val set_contents : Content (Key) (Value).t list -> 'a t -> [ `Maybe_siblings ] t
-  val set_content  : Content (Key) (Value).t -> 'a t -> [ `No_siblings ] t
+  val set_contents : Content.t list -> 'a t -> [ `Maybe_siblings ] t
+  val set_content  : Content.t -> 'a t -> [ `No_siblings ] t
   val set_vclock   : string option -> 'a t -> 'a t 
 end
