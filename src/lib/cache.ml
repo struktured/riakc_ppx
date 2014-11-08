@@ -106,5 +106,7 @@ let index_search t ?(opts = []) ~b ~index query_type =
     | Error err ->
       Error err
 *)
+
+let bucket_props t = Conn.bucket_props (get_conn t) (get_bucket t)
 end
 
