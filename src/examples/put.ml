@@ -1,6 +1,8 @@
 open Core.Std
 open Async.Std
 
+module BytesCache = Caches.BytesCache
+
 let option_to_string =
   Option.value ~default:"<none>"
 
@@ -8,13 +10,13 @@ let hex_of_string =
   String.concat_map ~f:(fun c -> sprintf "%X" (Char.to_int c))
 
 let print_usermeta content =
-  let module U = Riakc.Robj.Usermeta in
+  let module U = BytesCache.Robj.Content.Usermeta in
   List.iter
     ~f:(fun u ->
       printf "USERMETA: %s = %s\n" (U.key u) (option_to_string (U.value u)))
-    (Riakc.Robj.Content.usermeta content)
+    (BytesCache.Robj.Content.usermeta content)
 
-let print_indices content =
+let print_indices content = printf ("Unimplemented") (*
   let module I = Riakc.Robj.Index in
   let index_value_to_string = function
     | I.String s  -> "String " ^ s
@@ -26,9 +28,10 @@ let print_indices content =
     ~f:(fun i ->
       printf "INDEX: %s = %s\n" (I.key i) (index_value_to_string (I.value i)))
     (Riakc.Robj.Content.indices content)
+*)
 
 let print_value content =
-  let value = Riakc.Robj.Content.value content in
+  let value = BytesCache.Robj.Content.value content in
   List.iter
     ~f:(printf "CONTENT: %s\n")
     (String.split ~on:'\n' value)
@@ -36,7 +39,7 @@ let print_value content =
 let print_contents =
   List.iter
     ~f:(fun content ->
-      let module C = Riakc.Robj.Content in
+      let module C = BytesCache.Robj.Content in
       printf "CONTENT_TYPE: %s\n" (option_to_string (C.content_type content));
       printf "CHARSET: %s\n" (option_to_string (C.charset content));
       printf "CONTENT_ENCODING: %s\n" (option_to_string (C.content_encoding content));
@@ -48,7 +51,7 @@ let fail s =
   printf "%s\n" s;
   shutdown 1
 
-let parse_index s =
+let parse_index s = failwith ("Unimplemented") (*
   let module R = Riakc.Robj in
   match String.lsplit2 ~on:':' s with
     | Some ("bin", kv) -> begin
@@ -67,8 +70,9 @@ let parse_index s =
     end
     | _ ->
       failwith ("Bad index: " ^ s)
+*)
 
-let rec add_2i r idx =
+let rec add_2i r idx = failwith ("Unimplemented") (*
   if idx < Array.length Sys.argv then
     let module R = Riakc.Robj in
     let content = List.hd_exn (R.contents r) in
@@ -82,6 +86,7 @@ let rec add_2i r idx =
       (idx + 1)
   else
     r
+*)
 
 let exec () =
   let host = Sys.argv.(1) in
@@ -93,15 +98,16 @@ let exec () =
     ~host
     ~port
     (fun c ->
-      let module R = Riakc.Robj in
+      let module R = BytesCache.Robj in
       let robj = R.create (R.Content.create v) in
       let robj = add_2i robj 6 in
-      Riakc.Conn.put c ~b ~k ~opts:[Riakc.Opts.Put.Return_body] robj)
+      let cache = BytesCache.create ~conn:c ~bucket:b in 
+      BytesCache.put cache ~k ~opts:[BytesCache.Put.Return_body] robj)
 
 let eval () =
   exec () >>| function
     | Ok (robj, _) -> begin
-      let module R = Riakc.Robj in
+      let module R = BytesCache.Robj in
       let vclock =
 	match R.vclock robj with
 	  | Some v ->
@@ -121,6 +127,8 @@ let eval () =
     | Error `Overflow           -> fail "Overflow"
     | Error `Unknown_type       -> fail "Unknown_type"
     | Error `Wrong_type         -> fail "Wrong_type"
+    | Error `Protobuf_encoder_error         -> fail "Protobuf_encoder_error"
+
 
 let () =
   ignore (eval ());

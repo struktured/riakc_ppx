@@ -4,6 +4,8 @@
 open Core.Std
 open Async.Std
 
+module BytesCache = Caches.BytesCache
+
 (*
  * Take a string of bytes and convert them to hex string
  * representation
@@ -19,7 +21,7 @@ let hex_of_string =
 let print_contents contents =
   List.iter
     ~f:(fun content ->
-      let module C = Riakc.Robj.Content in
+      let module C = BytesCache.Content in
       printf "VALUE: %s\n" (C.value content))
     contents
 
@@ -39,9 +41,10 @@ let exec () =
     ~host
     ~port
     (fun c ->
-      let module R = Riakc.Robj in
+      let module R = BytesCache.Robj in
       let content  = R.Content.create "some random data" in
       let robj     = R.create content in
+      let cache = BytesCache.create ~conn:c ~bucket:"test_bucket" in
       (*
        * Put takes a bucket, a key, and an optional list of
        * options.  In this case we are setting the
@@ -49,11 +52,10 @@ let exec () =
        * looks like after the put.  It is possible that
        * siblings were created.
        *)
-      Riakc.Conn.put
-	c
-	~b:"test_bucket"
+      BytesCache.put
+	cache
 	~k:"test_key"
-	~opts:[Riakc.Opts.Put.Return_body]
+	~opts:[BytesCache.Put.Return_body]
 	robj)
 
 let eval () =
@@ -64,7 +66,7 @@ let eval () =
        * option], which is the key if Riak had to generate
        * it
        *)
-      let module R = Riakc.Robj in
+      let module R = BytesCache.Robj in
       (*
        * Extract the vclock, if it exists, and convert it to
        * to something printable
@@ -94,6 +96,8 @@ let eval () =
     | Error `Overflow           -> fail "Overflow"
     | Error `Unknown_type       -> fail "Unknown_type"
     | Error `Wrong_type         -> fail "Wrong_type"
+    | Error `Protobuf_encoder_error         -> fail "Protobuf_encoder_error"
+
 
 let () =
   ignore (eval ());

@@ -28,7 +28,8 @@ let parse_qt idx =
     | search ->
       failwith ("Unknown search: " ^ search)
 
-let exec () =
+let exec () = failwith ("Unimplemented")
+(*
   let host  = Sys.argv.(1) in
   let port  = Int.of_string Sys.argv.(2) in
   let b     = Sys.argv.(3) in
@@ -43,12 +44,13 @@ let exec () =
 	~b
 	~index
 	qt)
-
-let print_keys results =
+*)
+let print_keys results = failwith ("Unimplemented")
+(*
   List.iter
     ~f:(printf "%s\n")
-    results.Riakc.Response.keys
-
+    results.Response.keys
+*)
 let eval () =
   exec () >>| function
     | Ok results -> begin
