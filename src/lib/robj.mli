@@ -40,33 +40,60 @@ end
 
 module Content : functor (Key:Key) (Value:Value) ->
 sig
+  module Link : module type of Link(Key)
+  module Usermeta : module type of Usermeta(Key)(Value)
+  module Pair : module type of Pair(Key)(Value)
+
   type t = { value            : Value.t [@key 1]
   ; content_type     : string option [@key 2]
   ; charset          : string option [@key 3]
   ; content_encoding : string option [@key 4]
   ; vtag             : string option [@key 5]
-  ; links            : Link(Key).t list [@key 6]
+  ; links            : Link.t list [@key 6]
   ; last_mod         : Int32.t option [@key 7]
   ; last_mod_usec    : Int32.t option [@key 8]
-  ; usermeta         : Usermeta(Key) (Value).t list [@key 9]
-  ; indices          : Pair(Key) (Value).t list [@key 10]
+  ; usermeta         : Usermeta.t list [@key 9]
+  ; indices          : Pair.t list [@key 10]
   ; deleted          : bool option [@key 11]
   } [@@deriving protobuf]
-include Protobuf_capable.S with type t := t
+  include Protobuf_capable.S with type t := t
+  val create               : Value.t -> t
+
+  val value                : t -> Value.t
+  val content_type         : t -> string option
+  val charset              : t -> string option
+  val content_encoding     : t -> string option
+  val vtag                 : t -> string option
+  val links                : t -> Link.t list
+  val last_mod             : t -> Int32.t option
+  val last_mod_usec        : t -> Int32.t option
+  val usermeta             : t -> Usermeta.t list
+  val indices              : t -> Pair.t list (* TODO no idea if this is right *)
+  val deleted              : t -> bool
+
+  val set_value            : Value.t -> t -> t
+  val set_content_type     : string option -> t -> t
+  val set_charset          : string option -> t -> t
+  val set_content_encoding : string option -> t -> t
+  val set_vtag             : string option -> t -> t
+  val set_links            : Link.t list -> t -> t
+  val set_last_mod         : Int32.t option -> t -> t
+  val set_last_mod_usec    : Int32.t option -> t -> t
+  val set_usermeta         : Usermeta.t list -> t -> t
+  val set_indices          : Pair.t list -> t -> t
+  include Protobuf_capable.S with type t := t
 end
 
-module Make : functor(Key:Key) (Value:Value) ->
+module Make : functor (Key:Key) (Value:Value) ->
 sig
   module Content : module type of Content(Key)(Value)
-  type 'a t 
+  type 'a t
   val of_pb :
     Content.t list ->
     string option ->
     bool option ->
     [ `Maybe_siblings ] t
-
-  val to_pb : 'a t -> (Content.t list * string option)
-
+  
   val create       : Content.t -> [ `No_siblings ] t
   val contents     : 'a t -> Content.t list
   val content      : [ `No_siblings ] t -> Content.t

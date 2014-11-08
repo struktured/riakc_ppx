@@ -41,6 +41,7 @@ module Content(Key:Key) (Value:Value) = struct
   module Link = Link(Key)
   module Pair = Pair (Key) (Value)
   module Usermeta = Usermeta (Key) (Value)
+
   type t = { value            : Value.t [@key 1]
 	   ; content_type     : string option [@key 2]
 	   ; charset          : string option [@key 3]
@@ -53,6 +54,45 @@ module Content(Key:Key) (Value:Value) = struct
            ; indices          : Pair.t list [@key 10]
            ; deleted          : bool option [@key 11]
   } [@@deriving protobuf]
+
+  let create v =
+    { value = v
+    ; content_type     = None
+    ; charset          = None
+    ; content_encoding = None
+    ; vtag             = None
+    ; links            = []
+    ; last_mod         = None
+    ; last_mod_usec    = None
+    ; usermeta         = []
+    ; indices          = []
+    ; deleted          = Some false
+    }
+
+  let value t            = t.value
+  let content_type t     = t.content_type
+  let charset t          = t.charset
+  let content_encoding t = t.content_encoding
+  let vtag t             = t.vtag
+  let links t            = t.links
+  let last_mod t         = t.last_mod
+  let last_mod_usec t    = t.last_mod_usec
+  let usermeta t         = t.usermeta
+  let indices t          = t.indices
+  let deleted t          = match t.deleted with Some x -> x | None -> false
+
+  let set_value v t             = { t with value = v }
+  let set_content_type ct t     = { t with content_type = ct }
+  let set_charset cs t          = { t with charset = cs }
+  let set_content_encoding ce t = { t with content_encoding = ce }
+  let set_vtag vt t             = { t with vtag = vt }
+  let set_links ls t            = { t with links = ls }
+  let set_last_mod lm t         = { t with last_mod = lm }
+  let set_last_mod_usec lmu t   = { t with last_mod_usec = lmu }
+  let set_usermeta u t          = { t with usermeta = u }
+  let set_indices i t           = { t with indices = i }
+
+
 end
 
 

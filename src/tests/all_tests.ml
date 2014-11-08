@@ -70,7 +70,7 @@ let list_buckets_test c =
 let list_keys_test c =
   StringCache.list_keys c >>= fun keys1 ->
   let robj =
-    Robj_kv.create
+    StringCache.Robj.create
       (StringCache.Content.create "foobar")
   in
   Rconn.put c ~b ~k:(Rand.key 10) robj >>= fun _ ->
