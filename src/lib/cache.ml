@@ -11,6 +11,9 @@ struct
   type conn = Conn.t 
   type t = {conn:conn;bucket:string} 
 
+  let get_conn t = t.conn
+  let get_bucket t = t.bucket
+
   module Response = Response.Make(Key)(Value)
   module Old_Request = Request
   module Request = Request.Make(Key)(Value)

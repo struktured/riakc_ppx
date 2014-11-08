@@ -23,8 +23,6 @@ end
 
 module StringCache = Cache.Make(String)(String)
 
-module Robj_kv = Robj.Make(String)(String)
-
 module Rand = struct
   let lowercase = "abcdefghijklmnopqrstuvwxyz"
   let alpha     = lowercase ^ String.uppercase lowercase
@@ -52,19 +50,19 @@ let assert_cond msg = function
   end
 
 let ping_test c =
-  Rconn.ping c >>= fun _ ->
+  Rconn.ping (StringCache.get_conn c) >>= fun _ ->
   Deferred.return (Ok ())
 
 let client_id_test c =
-  Rconn.client_id c >>= fun _ ->
+  Rconn.client_id (StringCache.get_conn c) >>= fun _ ->
   Deferred.return (Ok ())
 
 let server_info_test c =
-  Rconn.server_info c >>= fun _ ->
+  Rconn.server_info (StringCache.get_conn c) >>= fun _ ->
   Deferred.return (Ok ())
 
 let list_buckets_test c =
-  Rconn.list_buckets c >>= fun _ ->
+  Rconn.list_buckets (StringCache.get_conn c) >>= fun _ ->
   Deferred.return (Ok ())
 
 let list_keys_test c =
@@ -73,8 +71,8 @@ let list_keys_test c =
     StringCache.Robj.create
       (StringCache.Content.create "foobar")
   in
-  Rconn.put c ~b ~k:(Rand.key 10) robj >>= fun _ ->
-  Rconn.list_keys c b >>= fun keys2 ->
+  StringCache.put c ~k:(Rand.key 10) robj >>= fun _ ->
+  StringCache.list_keys c >>= fun keys2 ->
   assert_cond
     "Key not added"
     (List.length keys1 = (List.length keys2 - 1))
@@ -84,9 +82,8 @@ let list_keys_test c =
     (List.mem keys2 "foobar")
 
 let get_notfound_test c =
-  let b = Sys.argv.(3) in
   let open Deferred.Monad_infix in
-  Rconn.get c ~b "no_key_here" >>= function
+  StringCache.get c "no_key_here" >>= function
     | Error `Notfound ->
       Deferred.return (Ok ())
     | Error err ->
@@ -95,25 +92,25 @@ let get_notfound_test c =
       Deferred.return (Error `Bad_response)
 
 let get_found_test c =
-  let b = Sys.argv.(3) in
   let robj =
-    Robj.create
-      (Robj.Content.create "foobar")
+    StringCache.Robj.create
+      (StringCache.Robj.Content.create "foobar")
   in
   let key = Rand.key 10 in
-  Rconn.put c ~b ~k:key robj >>= fun (_, _) ->
-  Rconn.get c ~b key         >>= fun robj ->
+  StringCache.put c ~k:key robj >>= fun (_, _) ->
+  StringCache.get c key         >>= fun robj ->
   Deferred.return (Ok ())
 
 let put_return_body_test c =
   let b = Sys.argv.(3) in
-  let open Riakc.Opts.Put in
+  let open StringCache.Put in
+  let module Robj = StringCache.Robj in
   let robj =
     Robj.create
       (Robj.Content.create "foobar")
   in
   let key = Rand.key 10 in
-  Rconn.put c ~opts:[Return_body] ~b ~k:key robj            >>= fun (robj', key) ->
+  StringCache.put c ~opts:[Return_body] ~k:key robj            >>= fun (robj', key) ->
   assert_cond "Key created for unknown reason" (key = None) >>= fun _ ->
   assert_cond
     "Add created sibling"
@@ -134,7 +131,8 @@ let execute_test t =
     Rconn.with_conn
       ~host:Sys.argv.(1)
       ~port:(Int.of_string Sys.argv.(2))
-      t
+      (fun conn -> 
+        let cache = StringCache.create ~conn ~bucket:(Sys.argv.(3)) in t cache)
   in
   with_conn ()
 

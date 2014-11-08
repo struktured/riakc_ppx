@@ -19,6 +19,9 @@ sig
 
   val create: conn:conn -> bucket:string -> t
 
+  val get_conn : t -> conn
+  val get_bucket : t -> string
+
   val list_keys :
     t ->
     (Key.t list, [> Conn.error | Response.error ]) Deferred.Result.t
