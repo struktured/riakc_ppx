@@ -89,7 +89,7 @@ let list_buckets payload = let open Result.Monad_infix in
  run '\x10' payload Buckets.from_protobuf >>= fun list_buckets -> Result.Ok (Done list_buckets)
 
 module Props = struct 
-  type t = (int option * bool option) [@@deriving protobuf]
+  type t = { n_val : int option [@key 1]; allow_mult: bool option [@key 2]} [@@deriving protobuf]
 end
 
 let bucket_props payload = let open Result.Monad_infix in

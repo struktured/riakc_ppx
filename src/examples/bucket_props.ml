@@ -27,8 +27,8 @@ let eval () =
   exec () >>| function
     | Ok props -> begin
       printf "n_val: %s\nallow_mult: %s\n"
-	(string_of_int_option props.n_val)
-	(string_of_bool_option props.Riakc.Response.allow_mult);
+	(string_of_int_option props.Response.Props.n_val)
+	(string_of_bool_option props.Response.Props.allow_mult);
       shutdown 0
     end
     | Error `Bad_conn           -> fail "Bad_conn"
@@ -39,6 +39,7 @@ let eval () =
     | Error `Overflow           -> fail "Overflow"
     | Error `Unknown_type       -> fail "Unknown_type"
     | Error `Wrong_type         -> fail "Wrong_type"
+    | Error `Protobuf_encoder_error -> fail "Protobuf_encoder_error"
 
 let () =
   ignore (eval ());

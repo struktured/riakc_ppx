@@ -40,7 +40,7 @@ end
 val list_buckets : string -> (Buckets.t t, [> error ]) Result.t
 
 module Props : sig 
-  type t = (int option * bool option) 
+  type t = {n_val: int option ; allow_mult: bool option} 
   include Protobuf_capable.S with type t:=t
 end
 
