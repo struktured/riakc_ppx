@@ -27,7 +27,7 @@ let eval () =
   exec () >>| function
     | Ok props -> begin
       printf "n_val: %s\nallow_mult: %s\n"
-	(string_of_int_option props.Riakc.Response.n_val)
+	(string_of_int_option props.n_val)
 	(string_of_bool_option props.Riakc.Response.allow_mult);
       shutdown 0
     end

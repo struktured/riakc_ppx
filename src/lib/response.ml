@@ -76,26 +76,20 @@ let client_id payload =
   Result.Ok (Done client_id)
 
 module Server_info = struct
-  type t = (string option * string option) (*[@@deriving protobuf] *)
-  let from_protobuf (d:Protobuf.Decoder.t) : t = raise (Invalid_argument "uimplemented")
-  let to_protobuf t e = raise (Invalid_argument "unimplemented")
+  type t = (string option * string option) [@@deriving protobuf] 
 end
 
 let server_info payload = let open Result.Monad_infix in
  run '\x08' payload Server_info.from_protobuf >>= fun server_info -> Result.Ok (Done server_info)
 module Buckets = struct 
-  type t = string list (*[@@deriving protobuf]*)
-  let from_protobuf (d:Protobuf.Decoder.t) : t = raise (Invalid_argument "uimplemented")
-  let to_protobuf t e = raise (Invalid_argument "unimplemented")
+  type t = string list [@@deriving protobuf]
 end
 
 let list_buckets payload = let open Result.Monad_infix in
  run '\x10' payload Buckets.from_protobuf >>= fun list_buckets -> Result.Ok (Done list_buckets)
 
 module Props = struct 
-  type t = (int option * bool option) (*[@@deriving protobuf]*)
-  let from_protobuf (d:Protobuf.Decoder.t) : t = raise (Invalid_argument "uimplemented")
-  let to_protobuf t e = raise (Invalid_argument "unimplemented")
+  type t = (int option * bool option) [@@deriving protobuf]
 end
 
 let bucket_props payload = let open Result.Monad_infix in
@@ -104,14 +98,10 @@ let bucket_props payload = let open Result.Monad_infix in
 module Make (Key:Key) (Value:Value) =
 struct
 
-type pair = (Key.t * string option) (*[@@deriving protobuf] *)
-let pair_from_protobuf (d:Protobuf.Decoder.t) : pair = raise (Invalid_argument "uimplemented")
-let pair_to_protobuf t e = raise (Invalid_argument "unimplemented")
+type pair = (Key.t * string option) [@@deriving protobuf] 
 
 module Keys = struct
-  type t = Key.t list (*[@@deriving protobuf] *)
-  let from_protobuf (d:Protobuf.Decoder.t) : t = raise (Invalid_argument "uimplemented")
-  let to_protobuf t e = raise (Invalid_argument "unimplemented")
+  type t = Key.t list [@@deriving protobuf] 
 end
 
 
@@ -140,9 +130,8 @@ let delete = function
     Result.Error `Bad_payload
 
 module Get = struct
-  type t = Robj.Content(Key) (Value).t list * string option * bool option (*[@@deriving protobuf]*)
-  let from_protobuf (d:Protobuf.Decoder.t):t = raise (Invalid_argument "from_protobuf")
-  let to_protobuf t e = raise (Invalid_argument "unimplemented")
+  module Content = Robj.Content(Key)(Value)
+  type t = Content.t list * string option * bool option [@@deriving protobuf]
 end
 
 let get payload =
@@ -152,9 +141,8 @@ let get payload =
 
 
 module Put = struct
-  type t = Robj.Content(Key) (Value).t list * string option * string option (*[@@deriving protobuf]*)
-  let from_protobuf (d:Protobuf.Decoder.t):t = raise (Invalid_argument "from_protobuf")
-  let to_protobuf t e = raise (Invalid_argument "unimplemented")
+  module Content = Robj.Content(Key)(Value)
+  type t = Content.t list * string option * string option [@@deriving protobuf]
 end
 
 let put payload =
@@ -163,14 +151,12 @@ let put payload =
   Result.Ok (Done (Robj_kv.of_pb c vclock None, key))
 
 module Index_search = struct
-  type t = Keys.t * pair list * string option * bool option (*[@@deriving protobuf]*)
-   let from_protobuf (d:Protobuf.Decoder.t):t = raise (Invalid_argument "from_protobuf")
-  let to_protobuf t e = raise (Invalid_argument "unimplemented")
+  type t = Keys.t * pair list * string option * bool option [@@deriving protobuf]
 
-type index_search = { keys         : Key.t list (*[@key 1]*)
-                    ; results      : (string * string option) list (*[@key 2]*)
-                    ; continuation : string option (*[@key 3]*)
-} (*[@@deriving protobuf]*)
+type index_search = { keys         : Key.t list [@key 1]
+                    ; results      : (string * string option) list [@key 2]
+                    ; continuation : string option [@key 3]
+} [@@deriving protobuf]
 
 end
 
