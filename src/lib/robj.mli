@@ -4,26 +4,26 @@ module type Value = sig include Protobuf_capable.S end
 
 module Link : functor(Key:Key) -> 
 sig 
-  type t = { bucket : string option [@key 1]
-           ; key    : Key.t option [@key 2]
-           ; tag    : string option [@key 3]
-           } [@@deriving protobuf]
+  type t = { bucket : string option 
+           ; key    : Key.t option 
+           ; tag    : string option 
+           }
 include Protobuf_capable.S with type t := t
 end
 
 module Pair : functor(Key:Key) (Value:Value) ->
 sig
-  type t = { key: Key.t  [@key 1]
-  ; value : Value.t option [@key 2]
-  } [@@deriving protobuf]
+  type t = { key: Key.t  
+  ; value : Value.t option 
+  } 
   include Protobuf_capable.S with type t := t
 end
 
 
 module Usermeta : functor(Key:Key) (Value:Value) ->
 sig
-  type t = { key : Key.t [@key 1]
-           ; value : Value.t option [@key 2]
+  type t = { key : Key.t 
+           ; value : Value.t option 
   } [@@deriving protobuf]
 
   val create : k:Key.t -> v:Value.t option -> t
@@ -44,18 +44,18 @@ sig
   module Usermeta : module type of Usermeta(Key)(Value)
   module Pair : module type of Pair(Key)(Value)
 
-  type t = { value            : Value.t [@key 1]
-  ; content_type     : string option [@key 2]
-  ; charset          : string option [@key 3]
-  ; content_encoding : string option [@key 4]
-  ; vtag             : string option [@key 5]
-  ; links            : Link.t list [@key 6]
-  ; last_mod         : Int32.t option [@key 7]
-  ; last_mod_usec    : Int32.t option [@key 8]
-  ; usermeta         : Usermeta.t list [@key 9]
-  ; indices          : Pair.t list [@key 10]
-  ; deleted          : bool option [@key 11]
-  } [@@deriving protobuf]
+  type t = { value            : Value.t 
+  ; content_type     : string option 
+  ; charset          : string option 
+  ; content_encoding : string option 
+  ; vtag             : string option 
+  ; links            : Link.t list 
+  ; last_mod         : Int32.t option 
+  ; last_mod_usec    : Int32.t option 
+  ; usermeta         : Usermeta.t list 
+  ; indices          : Pair.t list 
+  ; deleted          : bool option
+  } 
   include Protobuf_capable.S with type t := t
   val create               : Value.t -> t
 
