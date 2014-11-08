@@ -10,7 +10,7 @@ module Quorum = struct
     | Default  [@key 3] 
     | Quorum [@key 4] 
     | N [@key 5]  of int [@@deriving protobuf]
-(*
+
   let one     = Core.Std.Int32.of_int_exn (-2)
   let quorum  = Core.Std.Int32.of_int_exn (-3)
   let all     = Core.Std.Int32.of_int_exn (-4)
@@ -50,9 +50,6 @@ module Quorum = struct
 	| None ->
 	  failwith "of_int32 - n too large"
     end
-*)
-(*  let to_protobuf t e = ()
-  let from_protobuf d = One *)
 end 
 
 module Get(Key:Key) = struct
@@ -78,9 +75,7 @@ module Get(Key:Key) = struct
              ; head          : bool option [@key 8]
              ; deletedvclock : bool option [@key 9]
   } [@@deriving protobuf] 
-(*  let get_to_protobuf t e = ()
-  let get_from_protobuf d = raise (Invalid_argument "unimplemented")
-*)
+  
   let get_of_opts (opts:t list) ~b ~k =
     let g = { bucket        = b
 	    ; key           = k
@@ -94,7 +89,7 @@ module Get(Key:Key) = struct
 	    }
     in
     Core.Std.List.fold_left
-      ~f:(fun g -> function _ -> g) (*function
+      ~f:(fun g -> function
 	| Timeout _ ->
 	  g
 	| R n ->
@@ -110,7 +105,7 @@ module Get(Key:Key) = struct
 	| Head ->
 	  { g with head = Some true }
 	| Deletedvclock ->
-	  { g with deletedvclock = Some true }) *)
+	  { g with deletedvclock = Some true })
       ~init:g
       opts
 end
@@ -142,10 +137,6 @@ module Put(Key:Key) (Value:Value) = struct
              ; if_none_match   : bool option [@key 10]
              ; return_head     : bool option [@key 11]
   } [@@deriving protobuf]
-(*
-  let put_to_protobuf t e = ()
-  let put_from_protobuf d = raise (Invalid_argument "unimplemented")
-*)
 
   module Robj = Robj.Make(Key)(Value)
   let put_of_opts opts ~b ~k robj =
@@ -163,7 +154,7 @@ module Put(Key:Key) (Value:Value) = struct
 	    }
     in
     Core.Std.List.fold_left
-      ~f:(fun p -> function _ -> p) (*
+      ~f:(fun p -> function 
 	| Timeout _ ->
 	  p
 	| W n ->
@@ -179,7 +170,7 @@ module Put(Key:Key) (Value:Value) = struct
 	| If_none_match ->
 	  { p with if_none_match = Some true }
 	| Return_head ->
-	  { p with return_head = Some true }) *)
+	  { p with return_head = Some true }) 
       ~init:p
       opts
 end
@@ -207,11 +198,6 @@ module Delete(Key:Key) = struct
                 ; dw     : int option [@key 9]
   } [@@deriving protobuf]
 
-(*
-  let delete_to_protobuf t e = ()
-  let delete_from_protobuf d = raise (Invalid_argument "unimplemented")
-*)
-
   let delete_of_opts opts ~b ~k =
     let d = { bucket = b
 	    ; key    = k
@@ -225,7 +211,7 @@ module Delete(Key:Key) = struct
 	    }
     in
     Core.Std.List.fold_left
-      ~f:(fun d -> function _ -> d) (*
+      ~f:(fun d -> function 
 	| Timeout _ ->
 	  d
 	| Rw n ->
@@ -239,7 +225,7 @@ module Delete(Key:Key) = struct
 	| Pw n ->
 	  { d with pw = Some (Quorum.to_int32 n) }
 	| Dw n ->
-	  { d with dw = Some (Quorum.to_int32 n) }) *)
+	  { d with dw = Some (Quorum.to_int32 n) }) 
       ~init:d
       opts
 end
@@ -264,33 +250,11 @@ module Index_search = struct
     } [@@deriving protobuf]
 
 
-(*
-  let string_range_to_protobuf t e = ()
-  let string_range_from_protobuf d = raise (Invalid_argument "unimplemented")
-
-  let int_range_to_protobuf t e = ()
-  let int_range_from_protobuf d = raise (Invalid_argument "unimplemented")
-*)
-
-
-
-
-(*
-    let string_from_protobuf = Protobuf.Decoder.bytes
-    let string_to_protobuf = Protobuf.Encoder.bytes
-    let int_from_protobuf d = 0
-    let int_to_protobuf i e = ()
-*)
-
     type t =
       | Eq_string    [@key 1] of string
       | Eq_int       [@key 2] of int 
       | Range_string [@key 3] of string_range 
       | Range_int    [@key 4] of int_range [@@deriving protobuf]
-(*
-  let to_protobuf t e = ()
-  let from_protobuf d = raise (Invalid_argument "unimplemented")
-*)
 
     let eq_string key =
       Eq_string key
