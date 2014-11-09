@@ -1,30 +1,23 @@
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
 module Result = Core.Std.Result
+open Result
 
 type 'a t = More of 'a | Done of 'a
-type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `Unknown_type | `Wrong_type ]
+type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `Unknown_type | `Wrong_type | `Overflow ]
 
 
 let error payload =
   failwith "nyi"
-let parse_length s = raise (Invalid_argument "Unimplemented: parse_length")
-(*  let bits = Bitstring.bitstring_of_string s in
-  let to_int = Int32.to_int in
-  let module Int32 = Old_int32 in
-  let module Char = Old_char in
-  let module String = Old_string in
+let parse_length s = 
+  let to_int = Core.Std.Int32.to_int in
   let open Result.Monad_infix in
-  bitmatch bits with
-    | { len : 32 : bigendian } -> begin
-      match to_int len with
+  let len = Bitstring.extract_fastpath_int32_be_unsigned s 0 (Int32.of_int 32) in
+  match to_int len with
 	| Some n ->
 	  Ok n
 	| None ->
 	  Error `Overflow
-    end
-    | { _ } ->
-      Error `Incomplete *)
 
 module Ping = struct
   type t = unit 

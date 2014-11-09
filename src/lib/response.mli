@@ -5,7 +5,7 @@ module Result = Core.Std.Result
 
 type 'a t = More of 'a | Done of 'a
 
-type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `Unknown_type | `Wrong_type ]
+type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `Unknown_type | `Wrong_type | `Overflow ]
 val error : string -> (unit t, [> error ]) Result.t
 
 module Ping : sig

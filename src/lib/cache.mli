@@ -64,6 +64,7 @@ sig
                             | `Incomplete_payload
                             | `Protobuf_encoder_error
                             | `Unknown_type
-                            | `Wrong_type ]) Deferred.Result.t
+                            | `Wrong_type 
+                            | `Overflow ]) Deferred.Result.t
 end
 
