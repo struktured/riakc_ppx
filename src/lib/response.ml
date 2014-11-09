@@ -8,7 +8,7 @@ type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `U
 
 let error payload =
   failwith "nyi"
-let parse_length s = raise (Invalid_argument "parse_length")
+let parse_length s = raise (Invalid_argument "Unimplemented: parse_length")
 (*  let bits = Bitstring.bitstring_of_string s in
   let to_int = Int32.to_int in
   let module Int32 = Old_int32 in
@@ -65,9 +65,7 @@ let run mc mc_payload f =
 
 
 module Client_id = struct
-  type t = string (*[@@deriving protobuf]*)
-  let from_protobuf (d:Protobuf.Decoder.t) : t = raise (Invalid_argument "uimplemented")
-  let to_protobuf t e = raise (Invalid_argument "unimplemented")
+  type t = string [@@deriving protobuf]
 end
 
 let client_id payload =

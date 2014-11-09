@@ -100,7 +100,7 @@ let exec () =
     (fun c ->
       let module R = BytesCache.Robj in
       let robj = R.create (R.Content.create v) in
-      let robj = add_2i robj 6 in
+      (*let robj = add_2i robj 6 ina *)
       let cache = BytesCache.create ~conn:c ~bucket:b in 
       BytesCache.put cache ~k ~opts:[BytesCache.Put.Return_body] robj)
 
