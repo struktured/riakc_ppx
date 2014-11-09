@@ -15,7 +15,7 @@ sig
   module Delete : module type of Opts.Delete(Key)
   
   type conn = Conn.t
-  type t  (*{conn:conn;bucket:string} *)
+  type t  
 
   val create: conn:conn -> bucket:string -> t
 

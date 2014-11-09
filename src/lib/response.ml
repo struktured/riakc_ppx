@@ -37,10 +37,11 @@ let parse_mc s =
   let module Char = Old_char in
   let module String = Old_string in *)
   let open Result.Monad_infix in
-  let mc = Bitstring.get bits 8 in 
+  let mc = Bitstring.takebits 8 bits in
+  let bits = Bitstring.dropbits 8 bits in 
   try 
-    let payload = Bitstring.subbitstring bits 8 (Bitstring.bitstring_length bits) in
-      Result.Ok (Core.Std.Char.of_int_exn mc, payload)
+    let payload = Bitstring.takebits (Bitstring.bitstring_length bits) bits in
+      Result.Ok (Core.Std.Char.of_string (Bitstring.string_of_bitstring mc), payload)
   with _ ->
       Result.Error `Incomplete_payload
  
@@ -49,11 +50,12 @@ let run mc mc_payload f =
   let open Result.Monad_infix in
   parse_mc mc_payload >>= function
     | (p_mc, payload) when p_mc = mc -> begin
+      print_bytes ("got payload: " ^ (Bitstring.string_of_bitstring payload));
       let decoder = Protobuf.Decoder.of_string (Bitstring.string_of_bitstring payload) in
       let r = f decoder in
       Result.Ok r
     end
-    | _ ->
+    | (p_mc, payload) -> print_bytes ("payload error: " ^ (Bitstring.string_of_bitstring payload));
       Result.Error `Bad_payload
 
 
