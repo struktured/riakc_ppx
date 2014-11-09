@@ -58,13 +58,6 @@ sig
     (Response.Make(Key)(Value).index_search, [> Opts.Index_search.error ]) Deferred.Result.t
 *)
   val bucket_props : 
-    t -> (Response.Props.t ,
-                            [> `Bad_conn
-                            | `Bad_payload
-                            | `Incomplete_payload
-                            | `Protobuf_encoder_error
-                            | `Unknown_type
-                            | `Wrong_type 
-                            | `Overflow ]) Deferred.Result.t
+    t -> (Response.Props.t , [> Conn.error | Response.error]) Deferred.Result.t
 end
 
