@@ -50,12 +50,12 @@ let run mc mc_payload f =
   let open Result.Monad_infix in
   parse_mc mc_payload >>= function
     | (p_mc, payload) when p_mc = mc -> begin
-      print_bytes ("got payload: " ^ (Bitstring.string_of_bitstring payload));
+      print_bytes ("got payload: " ^ (Bitstring.string_of_bitstring payload)); 
       let decoder = Protobuf.Decoder.of_string (Bitstring.string_of_bitstring payload) in
       let r = f decoder in
       Result.Ok r
     end
-    | (p_mc, payload) -> print_bytes ("payload error: " ^ (Bitstring.string_of_bitstring payload));
+    | (p_mc, payload) -> print_bytes ("payload error: " ^ (Bitstring.string_of_bitstring payload)); 
       Result.Error `Bad_payload
 
 
@@ -81,12 +81,17 @@ end
 let list_buckets payload = let open Result.Monad_infix in
  run '\x10' payload Buckets.from_protobuf >>= fun list_buckets -> Result.Ok (Done list_buckets)
 
-module Props = struct 
-  type t = { n_val : int option [@key 1]; allow_mult: bool option [@key 2]} [@@deriving protobuf]
+module Props = struct
+  type t = {n_val : int option [@key 1] [@default 0]; allow_mult: bool option [@key 2] [@default false]} [@@deriving protobuf]
+end
+
+module Nested(T:Protobuf_capable.S) = struct
+  type t = { value: T.t [@key 1]} [@@deriving protobuf]
 end
 
 let bucket_props payload = let open Result.Monad_infix in
- run '\x14' payload Props.from_protobuf >>= fun bucket_props -> Result.Ok (Done bucket_props)
+ let module Message = Nested(Props) in
+ run '\x14' payload Message.from_protobuf >>= fun bucket_props -> Result.Ok (Done bucket_props.value)
 
 module Make (Key:Key) (Value:Value) =
 struct
@@ -112,9 +117,6 @@ let list_keys payload =
       Result.Ok (Done keys)
    | (keys, _) ->
       Result.Ok (More keys)
- 
-let bucket_props payload = let open Result.Monad_infix in
- run '\x14' payload Props.from_protobuf >>= fun bucket_props -> Result.Ok (Done bucket_props)
 
 let delete = function
   | "\x0E" ->

@@ -26,19 +26,28 @@ let client_id () =
 let server_info () =
   Result.Ok (wrap_request '\x07' "")
 
+module Props = struct
+  type t = string [@@deriving protobuf]
+end
+
 let bucket_props bucket () =
   let open Result.Monad_infix in
   let e = E.create () in
-  E.bytes bucket e;
+  Props.to_protobuf bucket e;
   Result.Ok (wrap_request '\x13' (E.to_string e))
 
 let list_buckets () =
    Result.Ok (wrap_request '\x0F' "")
 
+   
+module List_keys = struct
+  type t = string [@@deriving protobuf]
+end
+
 let list_keys bucket () =
   let open Result.Monad_infix in
   let e = E.create () in
-  E.bytes bucket e; 
+  List_keys.to_protobuf bucket e; 
   Result.Ok (wrap_request '\x11' (E.to_string e))
 
 module Make(Key:Key) (Value:Value) = 
