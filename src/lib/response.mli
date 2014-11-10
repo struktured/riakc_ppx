@@ -50,18 +50,18 @@ module Make : functor (Key:Key) (Value:Value) ->
 sig
 
 type pair = (Key.t * string option) [@@deriving protobuf]
-
+(*
 module Keys : sig
   type t = Key.t list 
   include Protobuf_capable.S with type t:=t
 end
-
+*)
 module List_keys : sig 
-  type t = Keys.t * bool
+  type t = bytes list * bool option
   include Protobuf_capable.S with type t:=t 
 end
 
-val list_keys    : string -> (Keys.t t, [> error ]) Result.t
+val list_keys    : string -> (bytes list t, [> error ]) Result.t
 val delete       : string -> (unit t, [> error ]) Result.t
 
 module Get : sig

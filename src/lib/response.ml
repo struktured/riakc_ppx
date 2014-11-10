@@ -33,9 +33,6 @@ let ping = function
 
 let parse_mc s =
   let bits = Bitstring.bitstring_of_string s in
-  (*let module Int32 = Old_int32 in
-  let module Char = Old_char in
-  let module String = Old_string in *)
   let open Result.Monad_infix in
   let mc = Bitstring.takebits 8 bits in
   let bits = Bitstring.dropbits 8 bits in 
@@ -50,7 +47,7 @@ let run mc mc_payload f =
   let open Result.Monad_infix in
   parse_mc mc_payload >>= function
     | (p_mc, payload) when p_mc = mc -> begin
-      print_bytes ("got payload: " ^ (Bitstring.string_of_bitstring payload)); 
+      (*print_bytes ("got payload: " ^ (Bitstring.string_of_bitstring payload));  *)
       let decoder = Protobuf.Decoder.of_string (Bitstring.string_of_bitstring payload) in
       let r = f decoder in
       Result.Ok r
@@ -98,22 +95,21 @@ struct
 
 type pair = (Key.t * string option) [@@deriving protobuf] 
 
+(*
 module Keys = struct
   type t = Key.t list [@@deriving protobuf] 
 end
-
+*)
 
 module Robj_kv = Robj.Make (Key) (Value)
 module List_keys = struct 
-  type t = Keys.t * bool (*[@@deriving protobuf] *)
-  let from_protobuf (d:Protobuf.Decoder.t) : t = raise (Invalid_argument "uimplemented")
-  let to_protobuf t e = raise (Invalid_argument "unimplemented")
+  type t = bytes list [@key 1] * (bool option [@key 2] [@default false]) [@@deriving protobuf] 
 end
 
 let list_keys payload =
   let open Result.Monad_infix in
   run '\x12' payload List_keys.from_protobuf >>= function
-   | (keys, true) ->
+   | (keys, Some true) ->
       Result.Ok (Done keys)
    | (keys, _) ->
       Result.Ok (More keys)
@@ -146,7 +142,7 @@ let put payload =
   Result.Ok (Done (Robj_kv.of_pb c vclock None, key))
 
 module Index_search = struct
-  type t = Keys.t * pair list * string option * bool option [@@deriving protobuf]
+  type t = Key.t list * pair list * string option * bool option [@@deriving protobuf]
 
 type index_search = { keys         : Key.t list [@key 1]
                     ; results      : (string * string option) list [@key 2]

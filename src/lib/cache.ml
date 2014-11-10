@@ -23,13 +23,21 @@ struct
   module Content = Robj.Content
   module Put = Opts.Put(Key)(Value)
   module Delete = Opts.Delete(Key)
+
+  let encode_decode b =
+    let e = Protobuf.Encoder.create () in
+    Protobuf.Encoder.bytes b e; Protobuf.Encoder.to_bytes e
+    
+ 
  let create ~conn ~bucket = {conn;bucket}
   let list_keys_stream cache consumer =
   Conn.do_request_stream
     cache.conn 
-    consumer 
+    (fun bytes -> let keys = List.map (fun b -> 
+      Key.from_protobuf (Protobuf.Decoder.of_bytes (encode_decode b))) bytes in consumer keys) 
     (Old_Request.list_keys cache.bucket)
-    Response.list_keys
+    Response.list_keys 
+
 
   let list_keys cache =
   Conn.do_request
@@ -38,7 +46,7 @@ struct
     Response.list_keys
   >>| function
     | Result.Ok keys ->
-      Result.Ok (List.concat keys)
+        Result.Ok (List.map (fun b -> Key.from_protobuf (Protobuf.Decoder.of_bytes (encode_decode b))) (List.concat keys))
     | Result.Error err ->
       Result.Error err
 
