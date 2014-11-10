@@ -1,5 +1,3 @@
-module type Key = sig include Protobuf_capable.S end
-module type Value = sig include Protobuf_capable.S end
 module Result = Core.Std.Result
 open Result
 
@@ -90,18 +88,9 @@ let bucket_props payload = let open Result.Monad_infix in
  let module Message = Nested(Props) in
  run '\x14' payload Message.from_protobuf >>= fun bucket_props -> Result.Ok (Done bucket_props.value)
 
-module Make (Key:Key) (Value:Value) =
-struct
 
-type pair = (Key.t * string option) [@@deriving protobuf] 
+type pair = (bytes * string option) [@@deriving protobuf] 
 
-(*
-module Keys = struct
-  type t = Key.t list [@@deriving protobuf] 
-end
-*)
-
-module Robj_kv = Robj.Make (Key) (Value)
 module List_keys = struct 
   type t = bytes list [@key 1] * (bool option [@key 2] [@default false]) [@@deriving protobuf] 
 end
@@ -121,50 +110,48 @@ let delete = function
     Result.Error `Bad_payload
 
 module Get = struct
-  module Content = Robj.Content(Key)(Value)
+  module Content = Robj.Content
   type t = Content.t list * string option * bool option [@@deriving protobuf]
 end
 
 let get payload =
   let open Result.Monad_infix in
   run '\x0A' payload Get.from_protobuf >>= fun (c, vclock, unchanged) ->
-  Result.Ok (Done (Robj_kv.of_pb c vclock unchanged))
+  Result.Ok (Done (Robj.of_pb c vclock unchanged))
 
 
 module Put = struct
-  module Content = Robj.Content(Key)(Value)
+  module Content = Robj.Content
   type t = Content.t list * string option * string option [@@deriving protobuf]
 end
 
 let put payload =
   let open Result.Monad_infix in
   run '\x0C' payload Put.from_protobuf >>= fun (c, vclock, key) ->
-  Result.Ok (Done (Robj_kv.of_pb c vclock None, key))
+  Result.Ok (Done (Robj.of_pb c vclock None, key))
 
 module Index_search = struct
-  type t = Key.t list * pair list * string option * bool option [@@deriving protobuf]
-
-type index_search = { keys         : Key.t list [@key 1]
+  type t = { keys         : bytes list [@key 1]
                     ; results      : (string * string option) list [@key 2]
                     ; continuation : string option [@key 3]
+                    ; d : bool option [@key 4]
 } [@@deriving protobuf]
 
 end
 
-(*
+
 let index_search payload = let open Index_search in 
    let open Result.Monad_infix in
-   run '\x1A' payload Index_search.from_protobuf >>= fun (ks, rs, cont, _d) ->
-   Result.Ok (Done { keys = ks; results = rs; continuation = cont })
+   run '\x1A' payload Index_search.from_protobuf >>= fun i ->
+     Result.Ok (Done i)
 
-let index_search_stream payload =
+let index_search_stream payload = failwith ("nyi")
+(*
   let open Result.Monad_infix in
-  run '\x1A' payload Index_sarch.index_search >>= function
+  run '\x1A' payload Index_search.from_protobuf >>= let open Index_search in function
     | (ks, rs, _, Some false)
     | (ks, rs, _, None) ->
-      Result.Ok (More { keys = ks; results = rs; continuation = None })
+      Result.Ok (More { keys = ks; results =rs; continuation = None; d=None})
     | (ks, rs, cont, Some true) ->
-      Result.Ok (Done { keys = ks; results = rs; continuation = cont })
+      Result.Ok (Done { keys = ks; results = rs; continuation = cont; d=Some true })
 *)
-end
-

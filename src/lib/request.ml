@@ -50,10 +50,8 @@ let list_keys bucket () =
   List_keys.to_protobuf bucket e; 
   Result.Ok (wrap_request '\x11' (E.to_string e))
 
-module Make(Key:Key) (Value:Value) = 
-  struct
 let get g () =
-  let module Get = Opts.Get(Key) in
+  let module Get = Opts.Get in
   let open Get in 
   let open Result.Monad_infix in
   let e = E.create () in 
@@ -61,15 +59,15 @@ let get g () =
   Core.Std.Ok (wrap_request '\x09' (E.to_string e))
 
 let put p () =
-  let module Put = Opts.Put (Key) (Value) in
-  let module Content = Robj.Content(Key) (Value) in
+  let module Put = Opts.Put in
+  let module Content = Robj.Content in
   let open Put in
   let e = E.create () in
   Put.put_to_protobuf p e;
   Result.Ok (wrap_request '\x0E' (E.to_string e))
 
 let delete d () =
-  let module Delete = Opts.Delete (Key) in
+  let module Delete = Opts.Delete in
   let open Delete in
   let open Result.Monad_infix in
   let e = E.create () in
@@ -185,5 +183,4 @@ let index_search ~stream idx_s () =
   E.int32_opt b  9 idx_s.max_results                >>= fun () ->
   E.bytes_opt b 10 cont                             >>= fun () ->
   *)Result.Ok (wrap_request '\x19' (E.to_string e))
-end
 

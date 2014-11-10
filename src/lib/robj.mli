@@ -1,50 +1,47 @@
-module type Key = sig include Protobuf_capable.S end
-module type Value = sig include Protobuf_capable.S end
 
-
-module Link : functor(Key:Key) -> 
+module Link : 
 sig 
   type t = { bucket : string option 
-           ; key    : Key.t option 
+           ; key    : bytes option 
            ; tag    : string option 
            }
 include Protobuf_capable.S with type t := t
 end
 
-module Pair : functor(Key:Key) (Value:Value) ->
+module Pair : 
 sig
-  type t = { key: Key.t  
-  ; value : Value.t option 
+  type t = { key : bytes  
+  ; value : bytes option 
   } 
   include Protobuf_capable.S with type t := t
 end
 
 
-module Usermeta : functor(Key:Key) (Value:Value) ->
+module Usermeta : 
 sig
-  type t = { key : Key.t 
-           ; value : Value.t option 
-  } [@@deriving protobuf]
+  type t = { key : bytes
+           ; value : bytes option 
+  }
 
-  val create : k:Key.t -> v:Value.t option -> t
+  val create : k:bytes -> v:bytes option -> t
 
-  val key : t ->  Key.t
-  val value : t -> Value.t option
+  val key : t ->  bytes
+  val value : t -> bytes option
 
-  val set_key : Key.t -> t -> t 
-  val set_value: Value.t option -> t -> t
+  val set_key : bytes -> t -> t 
+  val set_value: bytes option -> t -> t
 
   include Protobuf_capable.S with type t := t
 end
 
 
-module Content : functor (Key:Key) (Value:Value) ->
+module Content : 
 sig
-  module Link : module type of Link(Key)
-  module Usermeta : module type of Usermeta(Key)(Value)
-  module Pair : module type of Pair(Key)(Value)
+  module Link : module type of Link
+  module Usermeta : module type of Usermeta
+  module Pair : module type of Pair
 
-  type t = { value            : Value.t 
+  type t = { value            : bytes 
   ; content_type     : string option 
   ; charset          : string option 
   ; content_encoding : string option 
@@ -57,9 +54,9 @@ sig
   ; deleted          : bool option
   } 
   include Protobuf_capable.S with type t := t
-  val create               : Value.t -> t
+  val create               : bytes -> t
 
-  val value                : t -> Value.t
+  val value                : t -> bytes
   val content_type         : t -> string option
   val charset              : t -> string option
   val content_encoding     : t -> string option
@@ -71,7 +68,7 @@ sig
   val indices              : t -> Pair.t list (* TODO no idea if this is right *)
   val deleted              : t -> bool
 
-  val set_value            : Value.t -> t -> t
+  val set_value            : bytes -> t -> t
   val set_content_type     : string option -> t -> t
   val set_charset          : string option -> t -> t
   val set_content_encoding : string option -> t -> t
@@ -84,9 +81,6 @@ sig
   include Protobuf_capable.S with type t := t
 end
 
-module Make : functor (Key:Key) (Value:Value) ->
-sig
-  module Content : module type of Content(Key)(Value)
   type 'a t
   val of_pb :
     Content.t list ->
@@ -103,4 +97,3 @@ sig
   val set_contents : Content.t list -> 'a t -> [ `Maybe_siblings ] t
   val set_content  : Content.t -> 'a t -> [ `No_siblings ] t
   val set_vclock   : string option -> 'a t -> 'a t 
-end

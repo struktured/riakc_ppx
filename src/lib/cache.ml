@@ -14,35 +14,30 @@ struct
   let get_conn t = t.conn
   let get_bucket t = t.bucket
 
-  module Response = Response.Make(Key)(Value)
-  module Old_Request = Request
-  module Request = Request.Make(Key)(Value)
-  module Get = Opts.Get(Key)
-
-  module Robj = Robj.Make(Key)(Value)
   module Content = Robj.Content
-  module Put = Opts.Put(Key)(Value)
-  module Delete = Opts.Delete(Key)
+  module Put = Opts.Put
+  module Get = Opts.Get
+  module Delete = Opts.Delete
+  type 'a result = Value.t * 'a Robj.t 
 
   let encode_decode b =
     let e = Protobuf.Encoder.create () in
     Protobuf.Encoder.bytes b e; Protobuf.Encoder.to_bytes e
     
- 
  let create ~conn ~bucket = {conn;bucket}
   let list_keys_stream cache consumer =
   Conn.do_request_stream
     cache.conn 
     (fun bytes -> let keys = List.map (fun b -> 
       Key.from_protobuf (Protobuf.Decoder.of_bytes (encode_decode b))) bytes in consumer keys) 
-    (Old_Request.list_keys cache.bucket)
+    (Request.list_keys cache.bucket)
     Response.list_keys 
 
 
   let list_keys cache =
   Conn.do_request
     cache.conn
-    (Old_Request.list_keys cache.bucket)
+    (Request.list_keys cache.bucket)
     Response.list_keys
   >>| function
     | Result.Ok keys ->
@@ -50,11 +45,14 @@ struct
     | Result.Error err ->
       Result.Error err
 
+let serialize_key (k:Key.t) = 
+  let e = Protobuf.Encoder.create () in 
+  Key.to_protobuf k e; Protobuf.Encoder.to_bytes e
 
-let get cache ?(opts = []) k =
-  Conn.do_request
+let get cache ?(opts = []) (k:Key.t) =
+ Conn.do_request
     cache.conn
-    (Request.get (Get.get_of_opts opts ~b:cache.bucket ~k))
+    (Request.get (Get.get_of_opts opts ~b:cache.bucket ~k:(serialize_key k)))
     Response.get
   >>| function
     | Result.Ok [robj] -> begin
@@ -68,10 +66,10 @@ let get cache ?(opts = []) k =
     | Result.Error err ->
       Result.Error err
 
-let put cache ?(opts = []) ?k robj =
+let put cache ?(opts = []) ?(k:Key.t option) (robj:'a Robj.t) =
   Conn.do_request
     cache.conn
-    (Request.put (Put.put_of_opts opts ~b:cache.bucket ~k robj))
+    (Request.put (Put.put_of_opts opts ~b:cache.bucket ~k:(match k with None -> None | Some k -> Some (serialize_key k)) robj))
     Response.put
   >>| function
     | Result.Ok [(robj, key)] ->
@@ -81,10 +79,10 @@ let put cache ?(opts = []) ?k robj =
     | Result.Error err ->
       Result.Error err
 
-let delete cache ?(opts = []) k =
+let delete cache ?(opts = []) (k:Key.t) =
   Conn.do_request
     cache.conn
-    (Request.delete (Delete.delete_of_opts opts ~b:cache.bucket ~k))
+    (Request.delete (Delete.delete_of_opts opts ~b:cache.bucket ~k:(serialize_key k)))
     Response.delete
   >>| function
     | Result.Ok [()] ->

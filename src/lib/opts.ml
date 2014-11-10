@@ -1,8 +1,8 @@
 
-module type Key = sig include Protobuf_capable.S end 
-module type Value = sig include Protobuf_capable.S end
-
-
+let encode_decode b =
+  let e = Protobuf.Encoder.create () in
+  Protobuf.Encoder.bytes b e; Protobuf.Encoder.to_bytes e
+ 
 module Quorum = struct
   type t =
     | One [@key 1] 
@@ -52,7 +52,7 @@ module Quorum = struct
     end
 end 
 
-module Get(Key:Key) = struct
+module Get = struct
   type error = [ `Bad_conn | `Notfound | Response.error ]
 
   type t =
@@ -66,7 +66,7 @@ module Get(Key:Key) = struct
     | Deletedvclock
 
   type get = { bucket        : string [@key 1]
-             ; key           : Key.t [@key 2]
+             ; key           : bytes [@key 2]
              ; r             : int option [@key 3]
              ; pr            : int option [@key 4]
              ; basic_quorum  : bool option [@key 5]
@@ -110,8 +110,8 @@ module Get(Key:Key) = struct
       opts
 end
 
-module Put(Key:Key) (Value:Value) = struct
-  type error = [ `Bad_conn | Response.error ]
+module Put = struct
+  type error = [ `Bad_conn | Response.error | `Wrong_type ]
 
   type t =
     | Timeout  of int
@@ -123,25 +123,25 @@ module Put(Key:Key) (Value:Value) = struct
     | If_none_match  
     | Return_head 
 
-  module Content = Robj.Content(Key)(Value)
+  module Content = Robj.Content
+  module Robj = Robj
 
-  type put = { bucket          : string [@key 1]
-             ; key             : Key.t option [@key 2]
-             ; vclock          : string option [@key 3]
+  type put = { bucket          : bytes [@key 1]
+             ; key             : bytes option [@key 2] [@default ""]
+             ; vclock          : bytes option [@key 3] [@default ""]
              ; content         : Content.t [@key 4]
-             ; w               : int option [@key 5]
-             ; dw              : int option [@key 6]
-             ; pw              : int option [@key 7]
-             ; return_body     : bool option [@key 8]
-             ; if_not_modified : bool option [@key 9]
-             ; if_none_match   : bool option [@key 10]
-             ; return_head     : bool option [@key 11]
+             ; w               : int option [@key 5] [@default false]
+             ; dw              : int option [@key 6] [@default false]
+             ; return_body     : bool option [@key 7] [@default false]
+             ; pw              : int option [@key 8] [@default false]
+             ; if_not_modified : bool option [@key 9] [@default false]
+             ; if_none_match   : bool option [@key 10] [@default false]
+             ; return_head     : bool option [@key 11] [@default false]
   } [@@deriving protobuf]
 
-  module Robj = Robj.Make(Key)(Value)
-  let put_of_opts opts ~b ~k robj =
+  let put_of_opts opts ~b ~k (robj:'a Robj.t) =
     let p = { bucket          = b
-	    ; key             = k
+            ; key             = k 
 	    ; vclock          = Robj.vclock robj
 	    ; content         = Robj.content robj
 	    ; w               = None
@@ -175,7 +175,7 @@ module Put(Key:Key) (Value:Value) = struct
       opts
 end
 
-module Delete(Key:Key) = struct
+module Delete = struct
   type error = [ `Bad_conn | Response.error ]
 
   type t =
@@ -188,7 +188,7 @@ module Delete(Key:Key) = struct
     | Dw      of Quorum.t 
 
   type delete = { bucket : string [@key 1]
-                ; key    : Key.t [@key 2]
+                ; key    : bytes [@key 2]
                 ; rw     : int option [@key 3]
                 ; vclock : string option [@key 4]
                 ; r      : int option [@key 5]

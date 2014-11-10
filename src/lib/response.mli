@@ -1,6 +1,4 @@
 
-module type Key = sig include Protobuf_capable.S end
-module type Value = sig include Protobuf_capable.S end
 module Result = Core.Std.Result
 
 type 'a t = More of 'a | Done of 'a
@@ -46,16 +44,8 @@ end
 
 val bucket_props : string -> (Props.t t, [> error ]) Result.t
 
-module Make : functor (Key:Key) (Value:Value) ->
-sig
+type pair = (bytes * string option) [@@deriving protobuf]
 
-type pair = (Key.t * string option) [@@deriving protobuf]
-(*
-module Keys : sig
-  type t = Key.t list 
-  include Protobuf_capable.S with type t:=t
-end
-*)
 module List_keys : sig 
   type t = bytes list * bool option
   include Protobuf_capable.S with type t:=t 
@@ -65,20 +55,23 @@ val list_keys    : string -> (bytes list t, [> error ]) Result.t
 val delete       : string -> (unit t, [> error ]) Result.t
 
 module Get : sig
-  type t = Robj.Content(Key) (Value).t list * string option * bool option
+  type t = Robj.Content.t list * string option * bool option
   include Protobuf_capable.S with type t:=t 
 end
-val get          : string -> ([ `Maybe_siblings ] Robj.Make(Key)(Value).t t, [> error ]) Result.t
+val get          : string -> ([ `Maybe_siblings ] Robj.t t, [> error ]) Result.t
 
 module Put : sig 
- type t = Robj.Content(Key) (Value).t list * string option * string option 
+ type t = Robj.Content.t list * string option * string option 
  include Protobuf_capable.S with type t:=t 
 end
-val put          : string -> (([ `Maybe_siblings ] Robj.Make (Key) (Value).t * string option) t, [> error ]) Result.t
+val put          : string -> (([ `Maybe_siblings ] Robj.t * string option) t, [> error ]) Result.t
 
-(*
 module  Index_search : sig
-  type t = Keys.t * pair list * string option * bool option 
+  type t = { keys         : bytes list 
+                    ; results      : (string * string option) list 
+                    ; continuation : string option 
+                    ; d : bool option 
+}
 end
 
 val index_search :
@@ -88,6 +81,4 @@ val index_search :
 val index_search_stream :
   string ->
   (Index_search.t t, [> error ]) Result.t
-*)
-end
 

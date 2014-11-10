@@ -1,8 +1,4 @@
 
-module type Key = sig include Protobuf_capable.S end
-module type Value = sig include Protobuf_capable.S end
-
-
 module Quorum : sig
   type t =
     | One 
@@ -15,7 +11,7 @@ module Quorum : sig
   val of_int32 : Core.Std.Int32.t -> t 
 end
 
-module Get : functor(Key:Key) ->
+module Get :
 sig
   type error =[ `Bad_conn | `Notfound | Response.error ] 
 
@@ -30,7 +26,7 @@ sig
     | Deletedvclock 
 
   type get = { bucket        : string 
-             ; key           : Key.t 
+             ; key           : bytes 
              ; r             : int option 
              ; pr            : int option
              ; basic_quorum : bool option
@@ -44,13 +40,15 @@ sig
   val get_to_protobuf : get -> Protobuf.Encoder.t -> unit
 
 
-  val get_of_opts : t list -> b:string -> k:Key.t -> get
+  val get_of_opts : t list -> b:string -> k:bytes -> get
 
 end
 
-module Put : functor (Key:Key) (Value:Value) ->
+module Put : 
 sig
-  type error = [ `Bad_conn | Response.error ] 
+
+
+  type error = [ `Bad_conn | Response.error |`Wrong_type ] 
   type t =
     | Timeout of int 
     | W       of Quorum.t 
@@ -62,13 +60,13 @@ sig
     | Return_head 
 
   type put = { bucket          : string
-             ; key             : Key.t option
+             ; key             : bytes option
              ; vclock          : string option
-             ; content         : Robj.Content(Key)(Value).t
+             ; content         : Robj.Content.t
              ; w               : int option
              ; dw              : int option
-             ; pw              : int option
              ; return_body     : bool option 
+             ; pw              : int option
              ; if_not_modified : bool option 
              ; if_none_match   : bool option 
              ; return_head     : bool option 
@@ -77,10 +75,10 @@ sig
   val put_from_protobuf : Protobuf.Decoder.t -> put
   val put_to_protobuf : put -> Protobuf.Encoder.t -> unit
 
-  val put_of_opts : t list -> b:string -> k:Key.t option -> [ `No_siblings ] Robj.Make(Key)(Value).t -> put
+  val put_of_opts : t list -> b:string -> k:bytes option -> [ `No_siblings ] Robj.t -> put
 end
 
-module Delete : functor (Key:Key) ->
+module Delete : 
 sig
   type error = [ `Bad_conn | Response.error ]
 
@@ -94,7 +92,7 @@ sig
     | Dw      of Quorum.t 
 
   type delete = { bucket : string 
-                ; key    : Key.t 
+                ; key    : bytes 
                 ; rw     : int option 
                 ; vclock : string option 
                 ; r      : int option 
@@ -107,7 +105,7 @@ sig
   val delete_from_protobuf : Protobuf.Decoder.t -> delete
   val delete_to_protobuf : delete -> Protobuf.Encoder.t -> unit
 
-  val delete_of_opts : t list -> b:string -> k:Key.t  -> delete
+  val delete_of_opts : t list -> b:string -> k:bytes  -> delete
 end
 
 module Index_search : sig

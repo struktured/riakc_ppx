@@ -1,30 +1,37 @@
 
-module type Key = sig include Protobuf_capable.S end
-module type Value = sig include Protobuf_capable.S end
-
 let option_of_bool = function
   | Some true -> Some true
   | _         -> None
 
 
-module Link(Key:Key) = struct
+module Link = struct
   type t = { bucket : string option [@key 1]
-           ; key    : Key.t option [@key 2]
+           ; key    : bytes option [@key 2]
            ; tag    : string option [@key 3]
   } [@@deriving protobuf]
+
+  let bucket t = t.bucket
+  let key t    = t.key
+  let tag t    = t.tag
+
+  let set_bucket b t = { t with bucket = b }
+  let set_key k t    = { t with key = k }
+  let set_tag tag t  = { t with tag = tag }
+
 end
 
 
-module Pair (Key:Key) (Value:Value) = struct
-        type t = { key   : Key.t [@key 1]
-           ; value : Value.t option [@key 2]
+
+module Pair = struct
+        type t = { key   : bytes [@key 1]
+           ; value : bytes option [@key 2]
 	   } [@@deriving protobuf]
 end
 
-module Usermeta (Key:Key) (Value:Value) =
+module Usermeta =
 struct
-  type t = { key : Key.t [@key 1]
-           ; value : Value.t option [@key 2]
+  type t = { key : bytes [@key 1]
+           ; value : bytes option [@key 2]
   } [@@deriving protobuf]
 
   let create ~k ~v = { key = k; value = v }
@@ -37,12 +44,12 @@ struct
 end
 
 
-module Content(Key:Key) (Value:Value) = struct
-  module Link = Link(Key)
-  module Pair = Pair (Key) (Value)
-  module Usermeta = Usermeta (Key) (Value)
+module Content = struct
+  module Link = Link
+  module Pair = Pair 
+  module Usermeta = Usermeta 
 
-  type t = { value            : Value.t [@key 1]
+  type t = { value            : bytes [@key 1]
 	   ; content_type     : string option [@key 2]
 	   ; charset          : string option [@key 3]
 	   ; content_encoding : string option [@key 4]
@@ -96,8 +103,6 @@ module Content(Key:Key) (Value:Value) = struct
 end
 
 
-module Make (Key:Key) (Value:Value) = struct
-module Content = Content (Key) (Value)
 type 'a t = { contents  : Content.t list
 	    ; vclock    : string option
 	    ; unchanged : bool
@@ -125,4 +130,3 @@ let unchanged t       = t.unchanged
 let set_contents cs t = { t with contents = cs }
 let set_content c t   = { t with contents = [c] }
 let set_vclock v t    = { t with vclock = v }
-end 
