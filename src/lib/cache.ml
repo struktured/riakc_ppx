@@ -122,6 +122,13 @@ let create c =
   ; unchanged = false
   }
 
+let create_siblings contents =
+  { contents  = contents
+  ; vclock    = None
+  ; unchanged = false
+  }
+
+
 let contents t        = t.contents
 let content t         = Core.Std.List.hd_exn (t.contents)
 let vclock t          = t.vclock
@@ -137,7 +144,7 @@ let to_unsafe t =
 
 let from_unsafe t = 
   let contents = List.map Content.from_unsafe (Unsafe_Robj.contents t) in
-  set_vclock (Unsafe_Robj.vclock t) (set_contents contents (create (List.hd contents)))
+  set_vclock (Unsafe_Robj.vclock t) (create_siblings contents)
 
 end
 
