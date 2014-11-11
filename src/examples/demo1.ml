@@ -21,7 +21,7 @@ let hex_of_string =
 let print_contents contents =
   List.iter
     ~f:(fun content ->
-      let module C = BytesCache.Content in
+      let module C = BytesCache.Robj.Content in
       printf "VALUE: %s\n" (C.value content))
     contents
 

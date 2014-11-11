@@ -10,7 +10,7 @@ let hex_of_string =
 
 let print_usermeta content =
   let module Robj = BytesCache.Robj in
-  let module U = Robj.Content.Usermeta in
+  let module U = Robj.Usermeta in
   List.iter
     ~f:(fun u ->
       printf "USERMETA: %s = %s\n" (U.key u) (option_to_string (U.value u)))

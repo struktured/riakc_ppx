@@ -61,7 +61,7 @@ let list_keys_test c =
   BytesCache.list_keys c >>= fun keys1 ->
   let robj =
     BytesCache.Robj.create
-      (BytesCache.Content.create "foobar")
+      (BytesCache.Robj.Content.create "foobar")
   in
   BytesCache.put c ~k:(Rand.key 10) robj >>= fun _ ->
   BytesCache.list_keys c >>= fun keys2 ->
