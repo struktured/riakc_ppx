@@ -16,7 +16,6 @@ clean:
 distclean: clean
   rm -rf OMakeroot.omc .omakedb .omakedb.lock
 
-
 ################################################################################
 # General Project Information
 PROJECT = riakc
@@ -26,7 +25,7 @@ LIB_NAME = $(PROJECT)
 LIB_DESCRIPTION = Riak client.
 LIB_MODULES[] =
   $(removesuffix $(basename $(ls src/lib/*.ml)))
-LIB_PACKAGES = core async async_unix ppx_deriving ppx_deriving_protobuf ppx_deriving_protobuf.runtime bitstring
+LIB_PACKAGES = core async async_unix ppx_deriving ppx_deriving_protobuf ppx_deriving.show ppx_deriving_protobuf.runtime bitstring
 
 EXAMPLES[] =
   $(removesuffix $(basename $(ls src/examples/*.ml)))
@@ -68,7 +67,6 @@ BYTE_ENABLED = $(OCAMLC_EXISTS)
 OCAMLFLAGS = -bin-annot -annot -warn-error P -thread
 OCAMLCFLAGS = 
 OCAML_NATIVE_LINK_FLAGS =
-#OCAMLFINDFLAGS = -syntax camlp4o
 OCAMLPACKS[] = $(LIB_PACKAGES)
 
 .SUBDIRS: .

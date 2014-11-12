@@ -19,13 +19,13 @@ let serialize_key (k:Key.t) =
   Key.to_protobuf k e; Protobuf.Encoder.to_bytes e
 
 let deserialize_key (b:bytes) = 
-  let d = Protobuf.Decoder.of_bytes (encode_decode b) in Key.from_protobuf d
+  let d = Protobuf.Decoder.of_bytes b in Key.from_protobuf d
 
 let serialize_value (v:Value.t) = 
   let e = Protobuf.Encoder.create () in Value.to_protobuf v e; Protobuf.Encoder.to_bytes e
 
 let deserialize_value (b:bytes) = 
-  let d = Protobuf.Decoder.of_bytes (encode_decode b) in Value.from_protobuf d
+  let d = Protobuf.Decoder.of_bytes b in Value.from_protobuf d
 
  type conn = Conn.t 
   type t = {conn:conn;bucket:string} 
