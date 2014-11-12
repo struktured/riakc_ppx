@@ -3,9 +3,6 @@ open Async.Std
 module Result = Core.Std.Result
 module String = Core.Std.String
 
-module type Key = sig include Protobuf_capable.S end
-module type Value = sig include Protobuf_capable.S end
-
 
 type t = { r : Reader.t
 	 ; w : Writer.t

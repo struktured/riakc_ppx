@@ -187,10 +187,11 @@ let get cache ?(opts = []) (k:Key.t) =
       Result.Error err
 
 let put cache ?(opts = []) ?(k:Key.t option) (robj:'a Robj.t) =
-  let unsafe_robj = Robj.to_unsafe robj in 
+  let unsafe_robj = Robj.to_unsafe robj in
+  let serialized_key = Option.map k serialize_key in
   Conn.do_request
     cache.conn
-    (Request.put (Put.put_of_opts opts ~b:cache.bucket ~k:(Option.map k serialize_key) unsafe_robj))
+    (Request.put (Put.put_of_opts opts ~b:cache.bucket ~k:serialized_key unsafe_robj))
     Response.put
   >>| function
     | Result.Ok [(unsafe_robj, key)] ->

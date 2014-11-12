@@ -6,7 +6,6 @@ module Quorum : sig
     | Default 
     | Quorum 
     | N of int 
-  include Protobuf_capable.S with type t := t
   val to_int32 : t -> int
   val of_int32 : Core.Std.Int32.t -> t 
 end

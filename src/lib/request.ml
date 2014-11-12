@@ -48,7 +48,7 @@ let list_keys bucket () =
   let open Result.Monad_infix in
   let e = E.create () in
   List_keys.to_protobuf bucket e; 
-  Result.Ok (wrap_request '\x11' (E.to_string e))
+  Result.Ok (wrap_request '\x11' (E.to_bytes e))
 
 let get g () =
   let module Get = Opts.Get in
@@ -56,7 +56,7 @@ let get g () =
   let open Result.Monad_infix in
   let e = E.create () in 
   Get.get_to_protobuf g e;
-  Core.Std.Ok (wrap_request '\x09' (E.to_string e))
+  Core.Std.Ok (wrap_request '\x09' (E.to_bytes e))
 
 let put p () =
   let module Put = Opts.Put in
@@ -64,7 +64,7 @@ let put p () =
   let open Put in
   let e = E.create () in
   Put.put_to_protobuf p e;
-  Result.Ok (wrap_request '\x0E' (E.to_string e))
+  Result.Ok (wrap_request '\x0B' (E.to_bytes e))
 
 let delete d () =
   let module Delete = Opts.Delete in
@@ -72,19 +72,7 @@ let delete d () =
   let open Result.Monad_infix in
   let e = E.create () in
   Delete.delete_to_protobuf d e; 
-(*  E.bytes     b 1 d.bucket >>= fun () ->
-          let msg = E.embd_msg b 2 d.key in 
-          msg
-          >>= fun () ->
-  E.int32_opt b 3 d.rw     >>= fun () ->
-  E.bytes_opt b 4 d.vclock >>= fun () ->
-  E.int32_opt b 5 d.r      >>= fun () ->
-  E.int32_opt b 6 d.w      >>= fun () ->
-  E.int32_opt b 7 d.pr     >>= fun () ->
-  E.int32_opt b 8 d.pw     >>= fun () ->
-  E.int32_opt b 9 d.dw     >>= fun () ->
-  *) 
-  Result.Ok (wrap_request '\x0D' (E.to_string e))
+  Result.Ok (wrap_request '\x0D' (E.to_bytes e))
 
 type decorated_index_search = {
     bucket: bytes [@key 1];

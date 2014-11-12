@@ -5,11 +5,11 @@ let encode_decode b =
  
 module Quorum = struct
   type t =
-    | One [@key 1] 
-    | All [@key 2] 
-    | Default  [@key 3] 
-    | Quorum [@key 4] 
-    | N [@key 5]  of int [@@deriving protobuf]
+    | One 
+    | All 
+    | Default  
+    | Quorum 
+    | N of int 
 
   let one     = Core.Std.Int32.of_int_exn (-2)
   let quorum  = Core.Std.Int32.of_int_exn (-3)
