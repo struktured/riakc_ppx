@@ -43,9 +43,38 @@ let deserialize_value (b:bytes) =
 module Unsafe_Robj = Robj
 
 module Robj = struct
-  module Usermeta = Robj.Usermeta
-  module Pair = Robj.Pair
-  module Link = Robj.Link
+  
+module Link = 
+struct
+  type t = { bucket : bytes option [@key 1]
+           ; key    : Key.t option [@key 2]
+           ; tag    : bytes option [@key 3]
+  } [@@deriving protobuf]
+
+  let bucket t = t.bucket
+  let key t    = t.key
+  let tag t    = t.tag
+
+  let set_bucket b t = { t with bucket = b }
+  let set_key k t    = { t with key = k }
+  let set_tag tag t  = { t with tag = tag }
+end
+module Pair = struct
+  type t = { key : Key.t [@key 1]
+           ; value : Value.t option [@key 2]
+  } [@@deriving protobuf]
+
+  let create ~k ~v = { key = k; value = v }
+
+  let key t   = t.key
+  let value t = t.value
+
+  let set_key s t = {t with key = s}
+  let set_value so t = {t with value = so}
+end
+
+  module Usermeta = Pair
+
   module Content = struct
   type t = { value            : Value.t 
   ; content_type     : string option 

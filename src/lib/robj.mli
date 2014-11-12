@@ -10,15 +10,6 @@ end
 
 module Pair : 
 sig
-  type t = { key : bytes  
-  ; value : bytes option 
-  } 
-  include Protobuf_capable.S with type t := t
-end
-
-
-module Usermeta : 
-sig
   type t = { key : bytes
            ; value : bytes option 
   }
@@ -34,6 +25,7 @@ sig
   include Protobuf_capable.S with type t := t
 end
 
+module Usermeta : module type of Pair
 
 module Content : 
 sig

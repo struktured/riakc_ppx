@@ -24,7 +24,7 @@ let print_usermeta content =
   let module U = Cache.Robj.Usermeta in
   List.iter
     ~f:(fun u ->
-      printf "USERMETA: %s = %s\n" (U.key u) (option_to_string (U.value u)))
+      printf "USERMETA: %s = %s\n" (CompositeKey.show (U.key u)) (option_to_string (Option.map (U.value u) VariantValue.show)))
     (Cache.Robj.Content.usermeta content)
 
 let print_indices content = printf ("Unimplemented") (*

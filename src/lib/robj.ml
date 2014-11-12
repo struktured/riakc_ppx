@@ -23,13 +23,6 @@ end
 
 
 module Pair = struct
-        type t = { key   : bytes [@key 1]
-           ; value : bytes option [@key 2]
-	   } [@@deriving protobuf]
-end
-
-module Usermeta =
-struct
   type t = { key : bytes [@key 1]
            ; value : bytes option [@key 2]
   } [@@deriving protobuf]
@@ -43,6 +36,7 @@ struct
   let set_value so t = {t with value = so}
 end
 
+module Usermeta = Pair
 
 module Content = struct
   module Link = Link
