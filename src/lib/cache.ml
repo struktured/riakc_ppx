@@ -265,7 +265,7 @@ let with_cache ~host ~port ~bucket f =
     | Result.Error err ->
       Result.Error err
 
-let get cache ?(opts = []) (k:Key.t) = Conn.get cache.conn cache.bucket (serialize_key k) 
+let get cache ?(opts = []) (k:Key.t) = Conn.get cache.conn ~opts ~b:cache.bucket (serialize_key k) 
   >>| function
     | Result.Ok robj_unsafe -> begin
       let robj = Robj.from_unsafe robj_unsafe in
@@ -306,13 +306,6 @@ let delete cache ?(opts = []) (k:Key.t) =
       Result.Error err
 
 let index_search t ?(opts = []) ~(index:Index_value.t) query_type =
-  let idx_s =
-    Opts.Index_search.index_search_of_opts
-      opts
-      ~b:t.bucket
-      ~index:(serialize_proto Index_value.to_protobuf index)
-      ~query_type
-  in
   Conn.index_search
     t.conn
     ~opts
@@ -322,8 +315,6 @@ let index_search t ?(opts = []) ~(index:Index_value.t) query_type =
   >>| function
     | Result.Ok results ->
       Result.Ok results
-    | Result.Ok _ ->
-      Result.Error `Wrong_type
     | Result.Error err ->
       Result.Error err
 
