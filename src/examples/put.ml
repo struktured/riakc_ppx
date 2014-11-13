@@ -15,9 +15,9 @@ let print_usermeta content =
     ~f:(fun u ->
       printf "USERMETA: %s = %s\n" (U.key u) (option_to_string (U.value u)))
     (BytesCache.Robj.Content.usermeta content)
-
-let print_indices content = printf ("Unimplemented") (*
-  let module I = Riakc.Robj.Index in
+  
+let print_indices content = 
+  let module I = Cache.Default_index in
   let index_value_to_string = function
     | I.String s  -> "String " ^ s
     | I.Integer i -> "Integer " ^ (Int.to_string i)
@@ -26,9 +26,9 @@ let print_indices content = printf ("Unimplemented") (*
   in
   List.iter
     ~f:(fun i ->
-      printf "INDEX: %s = %s\n" (I.key i) (index_value_to_string (I.value i)))
-    (Riakc.Robj.Content.indices content)
-*)
+      printf "INDEX: %s = %s\n" (BytesCache.Robj.Index.key i) 
+      (option_to_string (Option.map (BytesCache.Robj.Index.value i) index_value_to_string)))
+    (BytesCache.Robj.Content.indices content)
 
 let print_value content =
   let value = BytesCache.Robj.Content.value content in
@@ -51,30 +51,29 @@ let fail s =
   printf "%s\n" s;
   shutdown 1
 
-let parse_index s = failwith ("Unimplemented") (*
-  let module R = Riakc.Robj in
+let parse_index s = 
+  let module R = BytesCache.Robj in
   match String.lsplit2 ~on:':' s with
     | Some ("bin", kv) -> begin
       match String.lsplit2 ~on:':' kv with
 	| Some (k, v) ->
-	  R.Index.create ~k ~v:(R.Index.String v)
+	  R.Index.create ~k ~v:(Some (Cache.Default_index.String v))
 	| None ->
 	  failwith ("Bad index: " ^ s)
     end
     | Some ("int", kv) -> begin
       match String.lsplit2 ~on:':' kv with
 	| Some (k, v) ->
-	  R.Index.create ~k ~v:(R.Index.Integer (Int.of_string v))
+	  R.Index.create ~k ~v:(Some (Cache.Default_index.Integer (Int.of_string v)))
 	| None ->
 	  failwith ("Bad index: " ^ s)
     end
     | _ ->
       failwith ("Bad index: " ^ s)
-*)
 
-let rec add_2i r idx = failwith ("Unimplemented") (*
+let rec add_2i r idx = 
   if idx < Array.length Sys.argv then
-    let module R = Riakc.Robj in
+    let module R = BytesCache.Robj in
     let content = List.hd_exn (R.contents r) in
     let indices = R.Content.indices content in
     add_2i
@@ -86,7 +85,6 @@ let rec add_2i r idx = failwith ("Unimplemented") (*
       (idx + 1)
   else
     r
-*)
 
 let exec () =
   let host = Sys.argv.(1) in
@@ -94,15 +92,15 @@ let exec () =
   let b    = Sys.argv.(3) in
   let k    = Sys.argv.(4) in
   let v    = Sys.argv.(5) in
-  Riakc.Conn.with_conn
+  BytesCache.with_cache
     ~host
     ~port
+    ~bucket:b
     (fun c ->
       let module R = BytesCache.Robj in
       let robj = R.create (R.Content.create v) in
-      (*let robj = add_2i robj 6 ina *)
-      let cache = BytesCache.create ~conn:c ~bucket:b in 
-      BytesCache.put cache ~k ~opts:[BytesCache.Put.Return_body] robj)
+      let robj = add_2i robj 6 in 
+      BytesCache.put c ~k ~opts:[BytesCache.Put.Return_body] robj)
 
 let eval () =
   exec () >>| function
