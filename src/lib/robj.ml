@@ -5,9 +5,9 @@ let option_of_bool = function
 
 
 module Link = struct
-  type t = { bucket : string option [@key 1]
+  type t = { bucket : bytes option [@key 1]
            ; key    : bytes option [@key 2]
-           ; tag    : string option [@key 3]
+           ; tag    : bytes option [@key 3]
   } [@@deriving protobuf]
 
   let bucket t = t.bucket
@@ -37,11 +37,13 @@ module Pair = struct
 end
 
 module Usermeta = Pair
+module Index = Pair
 
 module Content = struct
   module Link = Link
   module Pair = Pair 
   module Usermeta = Usermeta 
+  module Index = Index
 
   type t = { value            : bytes [@key 1]
 	   ; content_type     : string option [@key 2]
@@ -52,7 +54,7 @@ module Content = struct
            ; last_mod         : Int32.t option [@key 7] [@encoding `varint]
            ; last_mod_usec    : Int32.t option [@key 8] [@encoding `varint]
            ; usermeta         : Usermeta.t list [@key 9]
-           ; indices          : Pair.t list [@key 10]
+           ; indices          : Index.t list [@key 10]
            ; deleted          : bool option [@key 11]
   } [@@deriving protobuf]
 

@@ -1,6 +1,8 @@
 open Core.Std
 open Async.Std
 
+module Default_index = Cache.Default_index
+
 module CompositeKey = 
   struct
     type t = { name: bytes [@key 1]; id: int [@key 2]} [@@deriving protobuf, show]
@@ -24,11 +26,11 @@ let print_usermeta content =
   let module U = Cache.Robj.Usermeta in
   List.iter
     ~f:(fun u ->
-      printf "USERMETA: %s = %s\n" (CompositeKey.show (U.key u)) (option_to_string (Option.map (U.value u) VariantValue.show)))
+      printf "USERMETA: %s = %s\n" (CompositeKey.show (U.key u)) (option_to_string (U.value u)))
     (Cache.Robj.Content.usermeta content)
 
-let print_indices content = printf ("Unimplemented") (*
-  let module I = Riakc.Robj.Index in
+let print_indices content = 
+  let module I = Default_index in
   let index_value_to_string = function
     | I.String s  -> "String " ^ s
     | I.Integer i -> "Integer " ^ (Int.to_string i)
@@ -37,9 +39,9 @@ let print_indices content = printf ("Unimplemented") (*
   in
   List.iter
     ~f:(fun i ->
-      printf "INDEX: %s = %s\n" (I.key i) (index_value_to_string (I.value i)))
+      printf "INDEX: %s = %s\n" (Robj.Index.key i) (index_value_to_string (Cache.Robj.Index.value i)))
     (Riakc.Robj.Content.indices content)
-*)
+
 
 let print_value content =
   let value = Cache.Robj.Content.value content in
@@ -62,7 +64,7 @@ let fail s =
   printf "%s\n" s;
   shutdown 1
 
-let parse_index s = failwith ("Unimplemented") (*
+let parse_index s = 
   let module R = Riakc.Robj in
   match String.lsplit2 ~on:':' s with
     | Some ("bin", kv) -> begin
@@ -81,7 +83,7 @@ let parse_index s = failwith ("Unimplemented") (*
     end
     | _ ->
       failwith ("Bad index: " ^ s)
-*)
+
 
 let rec add_2i r idx = failwith ("Unimplemented") (*
   if idx < Array.length Sys.argv then
