@@ -253,24 +253,15 @@ let from_unsafe t =
 end
 
  let create ~conn ~bucket = {conn;bucket}
-  let list_keys_stream cache consumer =
-  Conn.do_request_stream
-    cache.conn 
+  let list_keys_stream cache consumer = Conn.list_keys_stream cache.conn cache.bucket
     (fun bytes -> let keys = List.map (fun b -> deserialize_key b) bytes in consumer keys) 
-    (Request.list_keys cache.bucket)
-    Response.list_keys 
 
 let with_cache ~host ~port ~bucket f =
   Conn.with_conn host port (fun conn -> (f (create ~conn ~bucket)))
 
-  let list_keys cache =
-  Conn.do_request
-    cache.conn
-    (Request.list_keys cache.bucket)
-    Response.list_keys
-  >>| function
+  let list_keys cache = Conn.list_keys cache.conn cache.bucket >>| function
     | Result.Ok keys ->
-        Result.Ok (List.map (fun b -> Key.from_protobuf (Protobuf.Decoder.of_bytes (encode_decode b))) (List.concat keys))
+        Result.Ok (List.map (fun b -> Key.from_protobuf (Protobuf.Decoder.of_bytes (encode_decode b))) keys)
     | Result.Error err ->
       Result.Error err
 

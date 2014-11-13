@@ -1,5 +1,5 @@
 open Async.Std
-
+open Core.Std
 module Result = Core.Std.Result
 module String = Core.Std.String
 
@@ -155,4 +155,85 @@ let list_buckets t =
     | Result.Error err ->
       Result.Error err
 
+
+let list_keys_stream t bucket consumer =
+  do_request_stream
+    t
+    consumer
+    (Request.list_keys bucket)
+    Response.list_keys
+
+let list_keys t bucket =
+  do_request
+    t
+    (Request.list_keys bucket)
+    Response.list_keys
+  >>| function
+    | Ok keys ->
+      Ok (List.concat keys)
+    | Error err ->
+      Error err
+
+let get t ?(opts = []) ~b k =
+  do_request
+    t
+    (Request.get (Opts.Get.get_of_opts opts ~b ~k))
+    Response.get
+  >>| function
+    | Ok [robj] -> begin
+      if Robj.contents robj = [] && Robj.vclock robj = None then
+	Error `Notfound
+      else
+	Ok robj
+    end
+    | Ok _ ->
+      Error `Wrong_type
+    | Error err ->
+      Error err
+
+let put t ?(opts = []) ~b ?k robj =
+  do_request
+    t
+    (Request.put (Opts.Put.put_of_opts opts ~b ~k robj))
+    Response.put
+  >>| function
+    | Ok [(robj, key)] ->
+      Ok (robj, key)
+    | Ok _ ->
+      Error `Wrong_type
+    | Error err ->
+      Error err
+
+let delete t ?(opts = []) ~b k =
+  do_request
+    t
+    (Request.delete (Opts.Delete.delete_of_opts opts ~b ~k))
+    Response.delete
+  >>| function
+    | Ok [()] ->
+      Ok ()
+    | Ok _ ->
+      Error `Wrong_type
+    | Error err ->
+      Error err
+
+let index_search t ?(opts = []) ~b ~index query_type =
+  let idx_s =
+    Opts.Index_search.index_search_of_opts
+      opts
+      ~b
+      ~index
+      ~query_type
+  in
+  do_request
+    t
+    (Request.index_search ~stream:false idx_s)
+    Response.index_search
+  >>| function
+    | Ok [results] ->
+      Ok results
+    | Ok _ ->
+      Error `Wrong_type
+    | Error err ->
+      Error err
 
