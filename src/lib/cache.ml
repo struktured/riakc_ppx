@@ -293,15 +293,15 @@ let put cache ?(opts = []) ?(k:Key.t option) (robj:'a Robj.t) =
       Result.Error err
 
 let delete cache ?(opts = []) (k:Key.t) =
-  Conn.do_request
+  let serialized_key = serialize_key k in
+  Conn.delete
     cache.conn
-    (Request.delete (Delete.delete_of_opts opts ~b:cache.bucket ~k:(serialize_key k)))
-    Response.delete
+    ~opts
+    ~b:cache.bucket
+    serialized_key
   >>| function
-    | Result.Ok [()] ->
+    | Result.Ok () ->
       Result.Ok ()
-    | Result.Ok _ ->
-      Result.Error `Wrong_type
     | Result.Error err ->
       Result.Error err
 
@@ -313,12 +313,14 @@ let index_search t ?(opts = []) ~(index:Index_value.t) query_type =
       ~index:(serialize_proto Index_value.to_protobuf index)
       ~query_type
   in
-  Conn.do_request
+  Conn.index_search
     t.conn
-    (Request.index_search ~stream:false idx_s)
-    Response.index_search
+    ~opts
+    ~b:t.bucket
+    ~index:(serialize_proto Index_value.to_protobuf index)
+    query_type
   >>| function
-    | Result.Ok [results] ->
+    | Result.Ok results ->
       Result.Ok results
     | Result.Ok _ ->
       Result.Error `Wrong_type
