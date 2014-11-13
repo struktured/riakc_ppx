@@ -39,8 +39,9 @@ let print_indices content =
   in
   List.iter
     ~f:(fun i ->
-      printf "INDEX: %s = %s\n" (Robj.Index.key i) (index_value_to_string (Cache.Robj.Index.value i)))
-    (Riakc.Robj.Content.indices content)
+      printf "INDEX: %s = %s\n" (CompositeKey.show (Cache.Robj.Index.key i)) (option_to_string 
+      (Option.map (Cache.Robj.Index.value i) index_value_to_string)))
+    (Cache.Robj.Content.indices content)
 
 
 let print_value content =
@@ -64,20 +65,19 @@ let fail s =
   printf "%s\n" s;
   shutdown 1
 
-let parse_index s = 
-  let module R = Riakc.Robj in
+let parse_index s =
   match String.lsplit2 ~on:':' s with
     | Some ("bin", kv) -> begin
       match String.lsplit2 ~on:':' kv with
 	| Some (k, v) ->
-	  R.Index.create ~k ~v:(R.Index.String v)
+            Cache.Robj.Index.create ~k:{CompositeKey.name=k;id=0} ~v:(Some (Default_index.String v))
 	| None ->
 	  failwith ("Bad index: " ^ s)
     end
     | Some ("int", kv) -> begin
       match String.lsplit2 ~on:':' kv with
 	| Some (k, v) ->
-	  R.Index.create ~k ~v:(R.Index.Integer (Int.of_string v))
+            Cache.Robj.Index.create ~k:{CompositeKey.name=k;id=0} ~v:(Some (Default_index.Integer (Int.of_string v)))
 	| None ->
 	  failwith ("Bad index: " ^ s)
     end
