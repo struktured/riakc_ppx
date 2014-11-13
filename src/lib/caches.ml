@@ -1,12 +1,11 @@
+module BytesCache = Cache.Make(Cache.Bytes)(Cache.Bytes)
+module BytesBoolCache = Cache.Make(Cache.Bytes)(Cache.Bool)
+module BytesIntCache = Cache.Make(Cache.Bytes)(Cache.Int)
+module IntBytesCache = Cache.Make(Cache.Int)(Cache.Bytes)
+module IntBoolCache = Cache.Make(Cache.Int)(Cache.Bool)
 
-module Bytes = 
-struct
-  include Bytes
-  let to_protobuf t e = Protobuf.Encoder.bytes t e
-  let from_protobuf d = Protobuf.Decoder.bytes d
-end
 
-module BytesCache = Cache.Make(Bytes)(Bytes)
+
 
 
 

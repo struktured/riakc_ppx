@@ -85,9 +85,9 @@ let parse_index s =
       failwith ("Bad index: " ^ s)
 
 
-let rec add_2i r idx = failwith ("Unimplemented") (*
+let rec add_2i r idx = 
   if idx < Array.length Sys.argv then
-    let module R = Riakc.Robj in
+    let module R = Cache.Robj in
     let content = List.hd_exn (R.contents r) in
     let indices = R.Content.indices content in
     add_2i
@@ -99,7 +99,7 @@ let rec add_2i r idx = failwith ("Unimplemented") (*
       (idx + 1)
   else
     r
-*)
+
 
 let exec () =
   let host = Sys.argv.(1) in

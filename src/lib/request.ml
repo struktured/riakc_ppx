@@ -142,14 +142,14 @@ let index_search ~stream idx_s () =
   let determine_cont idx_s =
     Core.Std.Option.map ~f:Kontinuation.to_string idx_s.continuation
   in
-  let query_type_conv = function
+  (*let query_type_conv = function
     | Query.Eq_string _
     | Query.Eq_int _ ->
       Core.Std.Ok 0
     | Query.Range_string _
     | Query.Range_int _ ->
       Core.Std.Ok 1
-  in
+  in*)
   let idx  = determine_index idx_s in
   let key  = determine_key   idx_s in
   let min  = determine_min   idx_s in
@@ -160,15 +160,5 @@ let index_search ~stream idx_s () =
   let open Result.Monad_infix in
   let decorated = {bucket=idx_s.bucket;idx;key;min;max;rt;cont;stream;max_results=idx_s.max_results;query_type=idx_s.query_type} in
   decorated_index_search_to_protobuf decorated e;
-  (*E.bytes     b  1 idx_s.bucket                     >>= fun () ->
-  E.bytes     b  2 idx                              >>= fun () ->
-  E.enum      b  3 idx_s.query_type query_type_conv >>= fun () ->
-  E.bytes_opt b  4 key                              >>= fun () ->
-  E.bytes_opt b  5 min                              >>= fun () ->
-  E.bytes_opt b  6 max                              >>= fun () ->
-  E.bool_opt  b  7 rt                               >>= fun () ->
-  E.bool      b  8 stream                           >>= fun () ->
-  E.int32_opt b  9 idx_s.max_results                >>= fun () ->
-  E.bytes_opt b 10 cont                             >>= fun () ->
-  *)Result.Ok (wrap_request '\x19' (E.to_string e))
+  Result.Ok (wrap_request '\x19' (E.to_string e))
 

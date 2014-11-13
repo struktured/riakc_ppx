@@ -1,6 +1,10 @@
 open Core.Std
 open Async.Std
 
+module Default_index = Cache.Default_index
+
+module Cache = Cache.Make_with_index(Cache.Bytes)(Cache.Bytes)(Cache.Bytes)
+
 let hex_of_string =
   String.concat_map ~f:(fun c -> sprintf "%X" (Char.to_int c))
 
@@ -28,33 +32,30 @@ let parse_qt idx =
     | search ->
       failwith ("Unknown search: " ^ search)
 
-let exec () = failwith ("Unimplemented")
-(*
+let exec () = 
+
   let host  = Sys.argv.(1) in
   let port  = Int.of_string Sys.argv.(2) in
   let b     = Sys.argv.(3) in
   let index = Sys.argv.(4) in
   let qt    = parse_qt 5   in
-  Riakc.Conn.with_conn
+  Cache.with_cache
     ~host
     ~port
+    ~bucket:b
     (fun c ->
-      Riakc.Conn.index_search
+      Cache.index_search
 	c
-	~b
 	~index
 	qt)
-*)
-let print_keys results = failwith ("Unimplemented")
-(*
-  List.iter
-    ~f:(printf "%s\n")
-    results.Response.keys
-*)
+
+let print_keys (results:Response.Index_search.t) = 
+  let open Response.Index_search in results.keys
+
 let eval () =
   exec () >>| function
     | Ok results -> begin
-      print_keys results;
+      let _ = print_keys results in
       shutdown 0
     end
     | Error `Bad_conn           -> fail "Bad_conn"
@@ -65,6 +66,8 @@ let eval () =
     | Error `Overflow           -> fail "Overflow"
     | Error `Unknown_type       -> fail "Unknown_type"
     | Error `Wrong_type         -> fail "Wrong_type"
+    | Error `Protobuf_encoder_error         -> fail "Protobuf_encoder_error"
+
 
 let () =
   ignore (eval ());

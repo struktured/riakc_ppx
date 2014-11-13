@@ -22,8 +22,21 @@ struct
   let show b = b
 end
 
-module Default_usermeta = Bytes
+module Bool = struct
+  include Core.Std.Bool
+  let to_protobuf t e = Protobuf.Encoder.bits32 (if t then Int32.one else Int32.zero) e
+  let from_protobuf d = (Protobuf.Decoder.bits32 d) == Int32.one
+  let show b = to_string b
+end
 
+module Int = struct
+  include Core.Std.Int
+  let to_protobuf t e = Protobuf.Encoder.varint (Int64.of_int t) e
+  let from_protobuf d = Int64.to_int (Protobuf.Decoder.varint d)
+  let show b = to_string b
+end
+
+module Default_usermeta = Bytes
 
 module Default_index = struct 
   type t =    String [@key 1] of bytes [@key 2]
@@ -188,7 +201,20 @@ module Content = struct
         usermeta = List.map Usermeta.from_unsafe (C.usermeta content);
         indices = List.map Index.from_unsafe (C.indices content);
         deleted = if (C.deleted content) then Some true else None}
- end
+ 
+
+  let set_value v t             = { t with value = v }
+  let set_content_type ct t     = { t with content_type = ct }
+  let set_charset cs t          = { t with charset = cs }
+  let set_content_encoding ce t = { t with content_encoding = ce }
+  let set_vtag vt t             = { t with vtag = vt }
+  let set_links ls t            = { t with links = ls }
+  let set_last_mod lm t         = { t with last_mod = lm }
+  let set_last_mod_usec lmu t   = { t with last_mod_usec = lmu }
+  let set_usermeta u t          = { t with usermeta = u }
+  let set_indices i t           = { t with indices = i }
+
+end
 
 type 'a t = { contents  : Content.t list
 	    ; vclock    : string option

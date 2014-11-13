@@ -86,7 +86,8 @@ end
 
 let bucket_props payload = let open Result.Monad_infix in
  let module Message = Nested(Props) in
- run '\x14' payload Message.from_protobuf >>= fun bucket_props -> Result.Ok (Done bucket_props.value)
+ let open Message in 
+ run '\x14' payload Message.from_protobuf >>= fun bucket_props -> let props = bucket_props.value in Result.Ok (Done props)
 
 
 type pair = (bytes * string option) [@@deriving protobuf] 
@@ -145,13 +146,10 @@ let index_search payload = let open Index_search in
    run '\x1A' payload Index_search.from_protobuf >>= fun i ->
      Result.Ok (Done i)
 
-let index_search_stream payload = failwith ("nyi")
-(*
+let index_search_stream payload = 
+
   let open Result.Monad_infix in
-  run '\x1A' payload Index_search.from_protobuf >>= let open Index_search in function
-    | (ks, rs, _, Some false)
-    | (ks, rs, _, None) ->
-      Result.Ok (More { keys = ks; results =rs; continuation = None; d=None})
-    | (ks, rs, cont, Some true) ->
-      Result.Ok (Done { keys = ks; results = rs; continuation = cont; d=Some true })
-*)
+  run '\x1A' payload Index_search.from_protobuf >>= let open Index_search in 
+    fun t -> match t.d with Some false | None -> Result.Ok (Done t) | Some true -> Result.Ok (More t)
+
+

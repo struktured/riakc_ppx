@@ -12,7 +12,7 @@ module State = struct
   let create () = ()
 end
 
-module Bytes = Caches.Bytes
+module Bytes = Cache.Bytes
 module BytesCache = Caches.BytesCache
 
 module Rand = struct
@@ -94,7 +94,6 @@ let get_found_test c =
   Deferred.return (Ok ())
 
 let put_return_body_test c =
-  let b = Sys.argv.(3) in
   let open BytesCache.Put in
   let module Robj = BytesCache.Robj in
   let robj =
@@ -119,14 +118,14 @@ let tests = [ ("ping"           , ping_test)
 	    ]
 
 let execute_test t =
-  let with_conn () =
-    Rconn.with_conn
+  let with_cache () =
+    BytesCache.with_cache
       ~host:Sys.argv.(1)
       ~port:(Int.of_string Sys.argv.(2))
-      (fun conn -> 
-        let cache = BytesCache.create ~conn ~bucket:(Sys.argv.(3)) in t cache)
+      ~bucket:(Sys.argv.(3))
+      (fun cache -> t cache)
   in
-  with_conn ()
+  with_cache ()
 
 let rec execute_tests s = function
   | [] -> Deferred.return (shutdown 0)
