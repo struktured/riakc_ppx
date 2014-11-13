@@ -265,36 +265,30 @@ let with_cache ~host ~port ~bucket f =
     | Result.Error err ->
       Result.Error err
 
-let get cache ?(opts = []) (k:Key.t) =
- Conn.do_request
-    cache.conn
-    (Request.get (Get.get_of_opts opts ~b:cache.bucket ~k:(serialize_key k)))
-    Response.get
+let get cache ?(opts = []) (k:Key.t) = Conn.get cache.conn cache.bucket (serialize_key k) 
   >>| function
-    | Result.Ok [robj_unsafe] -> begin
+    | Result.Ok robj_unsafe -> begin
       let robj = Robj.from_unsafe robj_unsafe in
       if Robj.contents robj = [] && Robj.vclock robj = None then
 	Result.Error `Notfound
       else
 	Result.Ok robj 
     end
-    | Result.Ok _ ->
-      Result.Error `Wrong_type
     | Result.Error err ->
       Result.Error err
 
 let put cache ?(opts = []) ?(k:Key.t option) (robj:'a Robj.t) =
   let unsafe_robj = Robj.to_unsafe robj in
   let serialized_key = Option.map k serialize_key in
-  Conn.do_request
+  Conn.put
     cache.conn
-    (Request.put (Put.put_of_opts opts ~b:cache.bucket ~k:serialized_key unsafe_robj))
-    Response.put
+    ~opts
+    ~b:cache.bucket
+    ?k:serialized_key 
+    unsafe_robj
   >>| function
-    | Result.Ok [(unsafe_robj, key)] ->
+    | Result.Ok (unsafe_robj, key) ->
       Result.Ok (Robj.from_unsafe unsafe_robj, Option.map key deserialize_key)
-    | Result.Ok _ ->
-      Result.Error `Wrong_type
     | Result.Error err ->
       Result.Error err
 
