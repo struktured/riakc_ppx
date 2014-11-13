@@ -1,6 +1,8 @@
 open Core.Std
 open Async.Std
 
+module BytesCache = Caches.BytesCache
+
 let option_to_string = function
   | Some v -> v
   | None   -> "<none>"
@@ -16,7 +18,7 @@ let exec () =
   Riakc.Conn.with_conn
     ~host
     ~port
-    (fun c -> Riakc.Conn.list_keys c b)
+    (fun c -> BytesCache.list_keys (BytesCache.create ~conn:c ~bucket:b))
 
 let eval () =
   exec () >>| function
@@ -34,7 +36,7 @@ let eval () =
     | Error `Overflow           -> fail "Overflow"
     | Error `Unknown_type       -> fail "Unknown_type"
     | Error `Wrong_type         -> fail "Wrong_type"
-
+    | Error `Protobuf_encoder_error -> fail "Protobuf_encoder_error"
 let () =
   ignore (eval ());
   never_returns (Scheduler.go ())

@@ -1,90 +1,94 @@
-open Core.Std
 
-type 'a t
+module Link : 
+sig 
+  type t = { bucket : bytes option 
+           ; key    : bytes option 
+           ; tag    : bytes option 
+           }
 
-module Usermeta : sig
-  type t
-
-  val create    : k:string -> v:string option -> t
-  val key       : t -> string
-  val value     : t -> string option
-  val set_key   : string -> t -> t
-  val set_value : string option -> t -> t
+  val bucket : t -> bytes option
+  val key : t -> bytes option
+  val tag : t -> bytes option
+  
+  include Protobuf_capable.S with type t := t
 end
 
-module Index : sig
-  type idx = | String  of string
-	     | Integer of int
-	     | Bad_int of string
-	     | Unknown of string
+module Pair : 
+sig
+  type t = { key : bytes
+           ; value : bytes option 
+  }
 
-  type t
+  val create : k:bytes -> v:bytes option -> t
 
-  val create    : k:string -> v:idx -> t
-  val key       : t -> string
-  val value     : t -> idx
-  val set_key   : string -> t -> t
-  val set_value : idx -> t -> t
+  val key : t ->  bytes
+  val value : t -> bytes option
+
+  val set_key : bytes -> t -> t
+  val set_value: bytes option -> t -> t
+
+  include Protobuf_capable.S with type t := t
 end
 
-module Link : sig
-  type t
+module Usermeta : module type of Pair
+module Index : module type of Pair
 
-  val bucket : t -> string option
-  val key    : t -> string option
-  val tag    : t -> string option
+module Content : 
+sig
 
-  val set_bucket : string option -> t -> t
-  val set_key    : string option -> t -> t
-  val set_tag    : string option -> t -> t
-end
+  type t = { value            : bytes 
+  ; content_type     : bytes option 
+  ; charset          : bytes option 
+  ; content_encoding : bytes option 
+  ; vtag             : bytes option 
+  ; links            : Link.t list 
+  ; last_mod         : Int32.t option 
+  ; last_mod_usec    : Int32.t option 
+  ; usermeta         : Usermeta.t list 
+  ; indices          : Index.t list 
+  ; deleted          : bool option
+  } 
+  include Protobuf_capable.S with type t := t
+  val create               : bytes -> t
 
-module Content : sig
-  type t
-
-  val create               : string -> t
-
-  val value                : t -> string
-  val content_type         : t -> string option
-  val charset              : t -> string option
-  val content_encoding     : t -> string option
-  val vtag                 : t -> string option
+  val value                : t -> bytes
+  val content_type         : t -> bytes option
+  val charset              : t -> bytes option
+  val content_encoding     : t -> bytes option
+  val vtag                 : t -> bytes option
   val links                : t -> Link.t list
   val last_mod             : t -> Int32.t option
   val last_mod_usec        : t -> Int32.t option
   val usermeta             : t -> Usermeta.t list
-  val indices              : t -> Index.t list
+  val indices              : t -> Index.t list 
   val deleted              : t -> bool
 
-  val set_value            : string -> t -> t
-  val set_content_type     : string option -> t -> t
-  val set_charset          : string option -> t -> t
-  val set_content_encoding : string option -> t -> t
-  val set_vtag             : string option -> t -> t
+  val set_value            : bytes -> t -> t
+  val set_content_type     : bytes option -> t -> t
+  val set_charset          : bytes option -> t -> t
+  val set_content_encoding : bytes option -> t -> t
+  val set_vtag             : bytes option -> t -> t
   val set_links            : Link.t list -> t -> t
   val set_last_mod         : Int32.t option -> t -> t
   val set_last_mod_usec    : Int32.t option -> t -> t
   val set_usermeta         : Usermeta.t list -> t -> t
   val set_indices          : Index.t list -> t -> t
-
-  val to_pb : t -> Pb_robj.Content.t
-  val of_pb : Pb_robj.Content.t -> t
+  include Protobuf_capable.S with type t := t
 end
 
-val of_pb :
-  Pb_robj.Content.t list ->
-  string option ->
-  bool option ->
-  [ `Maybe_siblings ] t
+  type 'a t
+  val of_pb :
+    Content.t list ->
+    bytes option ->
+    bool option ->
+    [ `Maybe_siblings ] t
+  
+  val create       : Content.t -> [ `No_siblings ] t
+  val contents     : 'a t -> Content.t list
+  val content      : [ `No_siblings ] t -> Content.t
+  val vclock       : 'a t -> bytes option
+  val unchanged    : 'a t -> bool
 
-val to_pb : 'a t -> (Pb_robj.Content.t list * string option)
-
-val create       : Content.t -> [ `No_siblings ] t
-val contents     : 'a t -> Content.t list
-val content      : [ `No_siblings ] t -> Content.t
-val vclock       : 'a t -> string option
-val unchanged    : 'a t -> bool
-
-val set_contents : Content.t list -> 'a t -> [ `Maybe_siblings ] t
-val set_content  : Content.t -> 'a t -> [ `No_siblings ] t
-val set_vclock   : string option -> 'a t -> 'a t
+  val set_contents : Content.t list -> 'a t -> [ `Maybe_siblings ] t
+  val set_content  : Content.t -> 'a t -> [ `No_siblings ] t
+  val set_vclock   : bytes option -> 'a t -> 'a t 

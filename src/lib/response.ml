@@ -1,140 +1,155 @@
-module Old_int32 = Int32
-module Old_char = Char
-module Old_string = String
-
-open Core.Std
-
-module P = Protobuf.Parser
-
-type error = [ `Bad_payload | `Incomplete_payload | P.error ]
+module Result = Core.Std.Result
+open Result
 
 type 'a t = More of 'a | Done of 'a
+type error = [ `Bad_payload | `Incomplete_payload | `Protobuf_encoder_error | `Unknown_type | `Wrong_type | `Overflow ]
 
-type props = { n_val      : int option
-	     ; allow_mult : bool option
-	     }
 
-type index_search = { keys         : string list
-		    ; results      : (string * string option) list
-		    ; continuation : string option
-		    }
+let error payload =
+  failwith "nyi"
+let parse_length s = 
+  let to_int = Core.Std.Int32.to_int in
+  let open Result.Monad_infix in
+  let len = Bitstring.extract_fastpath_int32_be_unsigned s 0 (Int32.of_int 32) in
+  match to_int len with
+	| Some n ->
+	  Ok n
+	| None ->
+	  Error `Overflow
+
+module Ping = struct
+  type t = unit 
+  let from_protobuf (d:Protobuf.Decoder.t) = ()
+  let to_protobuf t (e:Protobuf.Encoder.t) = ()
+end
+
+let ping = function
+  | "\x02" ->
+    Result.Ok (Done ((): Ping.t))
+  | _ ->
+    Result.Error `Bad_payload
 
 let parse_mc s =
   let bits = Bitstring.bitstring_of_string s in
-  let module Int32 = Old_int32 in
-  let module Char = Old_char in
-  let module String = Old_string in
   let open Result.Monad_infix in
-  bitmatch bits with
-    | { mc      : 8
-      ; payload : -1 : bitstring
-      } ->
-      Ok (Core.Std.Char.of_int_exn mc, payload)
-    | { _ } ->
-      Error `Incomplete_payload
-
+  let mc = Bitstring.takebits 8 bits in
+  let bits = Bitstring.dropbits 8 bits in 
+  try 
+    let payload = Bitstring.takebits (Bitstring.bitstring_length bits) bits in
+      Result.Ok (Core.Std.Char.of_string (Bitstring.string_of_bitstring mc), payload)
+  with _ ->
+      Result.Error `Incomplete_payload
+ 
 
 let run mc mc_payload f =
   let open Result.Monad_infix in
   parse_mc mc_payload >>= function
     | (p_mc, payload) when p_mc = mc -> begin
-      P.State.create payload >>= fun s ->
-      P.run f s              >>= fun (r, _) ->
-      Ok r
+      (*print_bytes ("got payload: " ^ (Bitstring.string_of_bitstring payload));  *)
+      let decoder = Protobuf.Decoder.of_string (Bitstring.string_of_bitstring payload) in
+      let r = f decoder in
+      Result.Ok r
     end
-    | _ ->
-      Error `Bad_payload
+    | (p_mc, payload) -> print_bytes ("payload error: " ^ (Bitstring.string_of_bitstring payload)); 
+      Result.Error `Bad_payload
 
-let error payload =
-  failwith "nyi"
 
-let ping = function
-  | "\x02" ->
-    Ok (Done ())
-  | _ ->
-    Error `Bad_payload
+module Client_id = struct
+  type t = string [@@deriving protobuf]
+end
 
 let client_id payload =
   let open Result.Monad_infix in
-  run '\x04' payload Pb_response.client_id >>= fun client_id ->
-  Ok (Done client_id)
+  run '\x04' payload Client_id.from_protobuf >>= fun client_id ->
+  Result.Ok (Done client_id)
 
-let server_info payload =
-  let open Result.Monad_infix in
-  run '\x08' payload Pb_response.server_info >>= fun server_info ->
-  Ok (Done server_info)
+module Server_info = struct
+  type t = (string option * string option) [@@deriving protobuf] 
+end
 
-let list_buckets payload =
-  let open Result.Monad_infix in
-  run '\x10' payload Pb_response.list_buckets >>= fun buckets ->
-  Ok (Done buckets)
+let server_info payload = let open Result.Monad_infix in
+ run '\x08' payload Server_info.from_protobuf >>= fun server_info -> Result.Ok (Done server_info)
+module Buckets = struct 
+  type t = string list [@@deriving protobuf]
+end
+
+let list_buckets payload = let open Result.Monad_infix in
+ run '\x10' payload Buckets.from_protobuf >>= fun list_buckets -> Result.Ok (Done list_buckets)
+
+module Props = struct
+  type t = {n_val : int option [@key 1] [@default 0]; allow_mult: bool option [@key 2] [@default false]} [@@deriving protobuf]
+end
+
+module Nested(T:Protobuf_capable.S) = struct
+  type t = { value: T.t [@key 1]} [@@deriving protobuf]
+end
+
+let bucket_props payload = let open Result.Monad_infix in
+ let module Message = Nested(Props) in
+ let open Message in 
+ run '\x14' payload Message.from_protobuf >>= fun bucket_props -> let props = bucket_props.value in Result.Ok (Done props)
+
+
+type pair = (bytes * string option) [@@deriving protobuf] 
+
+module List_keys = struct 
+  type t = bytes list [@key 1] * (bool option [@key 2] [@default false]) [@@deriving protobuf] 
+end
 
 let list_keys payload =
   let open Result.Monad_infix in
-  run '\x12' payload Pb_response.list_keys >>= function
-    | (keys, false) ->
-      Ok (More keys)
-    | (keys, true) ->
-      Ok (Done keys)
-
-let bucket_props payload =
-  let open Result.Monad_infix in
-  run '\x14' payload Pb_response.bucket_props >>= fun (n_val, allow_mult) ->
-  match n_val with
-    | Some n_val32 -> begin
-      match Int32.to_int n_val32 with
-	| Some n_val ->
-	  Ok (Done { n_val = Some n_val; allow_mult })
-	| None ->
-	  Error `Overflow
-    end
-    | None ->
-      Ok (Done { n_val = None; allow_mult })
-
-let get payload =
-  let open Result.Monad_infix in
-  run '\x0A' payload Pb_response.get >>= fun (c, vclock, unchanged) ->
-  Ok (Done (Robj.of_pb c vclock unchanged))
-
-let put payload =
-  let open Result.Monad_infix in
-  run '\x0C' payload Pb_response.put >>= fun (c, vclock, key) ->
-  Ok (Done (Robj.of_pb c vclock None, key))
+  run '\x12' payload List_keys.from_protobuf >>= function
+   | (keys, Some true) ->
+      Result.Ok (Done keys)
+   | (keys, _) ->
+      Result.Ok (More keys)
 
 let delete = function
   | "\x0E" ->
-    Ok (Done ())
+    Result.Ok (Done ())
   | _ ->
-    Error `Bad_payload
+    Result.Error `Bad_payload
 
- let index_search payload =
+module Get = struct
+  module Content = Robj.Content
+  type t = Content.t list * string option * bool option [@@deriving protobuf]
+end
+
+let get payload =
+  let open Result.Monad_infix in
+  run '\x0A' payload Get.from_protobuf >>= fun (c, vclock, unchanged) ->
+  Result.Ok (Done (Robj.of_pb c vclock unchanged))
+
+
+module Put = struct
+  module Content = Robj.Content
+  type t = Content.t list * string option * string option [@@deriving protobuf]
+end
+
+let put payload =
+  let open Result.Monad_infix in
+  run '\x0C' payload Put.from_protobuf >>= fun (c, vclock, key) ->
+  Result.Ok (Done (Robj.of_pb c vclock None, key))
+
+module Index_search = struct
+  type t = { keys         : bytes list [@key 1]
+                    ; results      : (string * string option) list [@key 2]
+                    ; continuation : string option [@key 3]
+                    ; d : bool option [@key 4]
+} [@@deriving protobuf]
+
+end
+
+
+let index_search payload = let open Index_search in 
    let open Result.Monad_infix in
-   run '\x1A' payload Pb_response.index_search >>= fun (ks, rs, cont, _d) ->
-   Ok (Done { keys = ks; results = rs; continuation = cont })
+   run '\x1A' payload Index_search.from_protobuf >>= fun i ->
+     Result.Ok (Done i)
 
-let index_search_stream payload =
-  let open Result.Monad_infix in
-  run '\x1A' payload Pb_response.index_search >>= function
-    | (ks, rs, _, Some false)
-    | (ks, rs, _, None) ->
-      Ok (More { keys = ks; results = rs; continuation = None })
-    | (ks, rs, cont, Some true) ->
-      Ok (Done { keys = ks; results = rs; continuation = cont })
+let index_search_stream payload = 
 
-let parse_length s =
-  let bits = Bitstring.bitstring_of_string s in
-  let to_int = Int32.to_int in
-  let module Int32 = Old_int32 in
-  let module Char = Old_char in
-  let module String = Old_string in
   let open Result.Monad_infix in
-  bitmatch bits with
-    | { len : 32 : bigendian } -> begin
-      match to_int len with
-	| Some n ->
-	  Ok n
-	| None ->
-	  Error `Overflow
-    end
-    | { _ } ->
-      Error `Incomplete
+  run '\x1A' payload Index_search.from_protobuf >>= let open Index_search in 
+    fun t -> match t.d with Some false | None -> Result.Ok (Done t) | Some true -> Result.Ok (More t)
+
+

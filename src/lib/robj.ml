@@ -1,84 +1,14 @@
-open Core.Std
 
 let option_of_bool = function
-  | true  -> Some true
-  | false -> None
+  | Some true -> Some true
+  | _         -> None
 
-let int_of_string i = Option.try_with (fun () -> Int.of_string i)
-
-module Usermeta = struct
-  type t = { key : string
-	   ; value : string option
-	   }
-
-  let create ~k ~v = { key = k; value = v }
-
-  let key t   = t.key
-  let value t = t.value
-
-  let set_key s t = {t with key = s}
-  let set_value so t = {t with value = so}
-
-  let of_pb { Pb_robj.Pair.key; value } =
-    { key; value }
-
-  let to_pb { key; value } =
-    { Pb_robj.Pair.key; value }
-
-end
-
-module Index = struct
-  type idx = | String  of string
-	     | Integer of int
-	     | Bad_int of string
-	     | Unknown of string
-
-  type t = { key : string
-	   ; value : idx
-	   }
-
-  let create ~k ~v = { key = k; value = v }
-
-  let key t   = t.key
-  let value t = t.value
-
-  let set_key s t = {t with key = s}
-  let set_value idx t = {t with value = idx}
-
-  let of_pb { Pb_robj.Pair.key; value } =
-    let value = Option.value ~default:"" value in
-    match String.rsplit2 ~on:'_' key with
-      | Some (k, "bin") ->
-	{ key = k; value = String value }
-      | Some (k, "int") -> begin
-	match int_of_string value with
-	  | Some i ->
-	    { key = k; value = Integer i }
-	  | None ->
-	    { key = k; value = Bad_int value }
-      end
-      | Some (_, _) ->
-	{ key; value = Unknown value }
-      | None ->
-	{ key; value = Unknown value }
-
-  let to_pb = function
-    | { key; value = String s } ->
-      { Pb_robj.Pair.key = key ^ "_bin"; value = Some s }
-    | { key; value = Integer i } ->
-      { Pb_robj.Pair.key = key ^ "_int"; value = Some (Int.to_string i) }
-    | { key; value = Bad_int s } ->
-      { Pb_robj.Pair.key; value = Some s }
-    | { key; value = Unknown s } ->
-      { Pb_robj.Pair.key; value = Some s }
-
-end
 
 module Link = struct
-  type t = { bucket : string option
-	   ; key    : string option
-	   ; tag    : string option
-	   }
+  type t = { bucket : bytes option [@key 1]
+           ; key    : bytes option [@key 2]
+           ; tag    : bytes option [@key 3]
+  } [@@deriving protobuf]
 
   let bucket t = t.bucket
   let key t    = t.key
@@ -88,64 +18,45 @@ module Link = struct
   let set_key k t    = { t with key = k }
   let set_tag tag t  = { t with tag = tag }
 
-  let of_pb l =
-    let module L = Pb_robj.Link in
-    { bucket = l.L.bucket
-    ; key    = l.L.key
-    ; tag    = l.L.tag
-    }
-
-  let to_pb t =
-    { Pb_robj.Link.bucket = t.bucket
-    ;              key    = t.key
-    ;              tag    = t.tag
-    }
-
 end
 
+
+
+module Pair = struct
+  type t = { key : bytes [@key 1]
+           ; value : bytes option [@key 2]
+  } [@@deriving protobuf]
+
+  let create ~k ~v = { key = k; value = v }
+
+  let key t   = t.key
+  let value t = t.value
+
+  let set_key s t = {t with key = s}
+  let set_value so t = {t with value = so}
+end
+
+module Usermeta = Pair
+module Index = Pair
+
 module Content = struct
-  type t = { value            : string
-	   ; content_type     : string option
-	   ; charset          : string option
-	   ; content_encoding : string option
-	   ; vtag             : string option
-	   ; links            : Link.t list
-	   ; last_mod         : Int32.t option
-	   ; last_mod_usec    : Int32.t option
-	   ; usermeta         : Usermeta.t list
-	   ; indices          : Index.t list
-	   ; deleted          : bool
-	   }
+  module Link = Link
+  module Pair = Pair 
+  module Usermeta = Usermeta 
+  module Index = Index
 
-  let of_pb pb =
-    let module C = Pb_robj.Content in
-    { value            = pb.C.value
-    ; content_type     = pb.C.content_type
-    ; charset          = pb.C.content_type
-    ; content_encoding = pb.C.content_encoding
-    ; vtag             = pb.C.vtag
-    ; links            = List.map ~f:Link.of_pb pb.C.links
-    ; last_mod         = pb.C.last_mod
-    ; last_mod_usec    = pb.C.last_mod_usec
-    ; usermeta         = List.map ~f:Usermeta.of_pb pb.C.usermeta
-    ; indices          = List.map ~f:Index.of_pb pb.C.indices
-    ; deleted          = Option.value ~default:false pb.C.deleted
-    }
-
-  let to_pb c =
-    let module C = Pb_robj.Content in
-    { C.value = c.value
-    ;   content_type     = c.content_type
-    ;   charset          = c.charset
-    ;   content_encoding = c.content_encoding
-    ;   vtag             = c.vtag
-    ;   links            = List.map ~f:Link.to_pb c.links
-    ;   last_mod         = c.last_mod
-    ;   last_mod_usec    = c.last_mod_usec
-    ;   usermeta         = List.map ~f:Usermeta.to_pb c.usermeta
-    ;   indices          = List.map ~f:Index.to_pb c.indices
-    ;   deleted          = option_of_bool c.deleted
-    }
+  type t = { value            : bytes [@key 1]
+	   ; content_type     : string option [@key 2]
+	   ; charset          : string option [@key 3]
+	   ; content_encoding : string option [@key 4]
+           ; vtag             : string option [@key 5]
+           ; links            : Link.t list   [@key 6]
+           ; last_mod         : Int32.t option [@key 7] [@encoding `varint]
+           ; last_mod_usec    : Int32.t option [@key 8] [@encoding `varint]
+           ; usermeta         : Usermeta.t list [@key 9]
+           ; indices          : Index.t list [@key 10]
+           ; deleted          : bool option [@key 11]
+  } [@@deriving protobuf]
 
   let create v =
     { value = v
@@ -158,7 +69,7 @@ module Content = struct
     ; last_mod_usec    = None
     ; usermeta         = []
     ; indices          = []
-    ; deleted          = false
+    ; deleted          = Some false
     }
 
   let value t            = t.value
@@ -171,7 +82,7 @@ module Content = struct
   let last_mod_usec t    = t.last_mod_usec
   let usermeta t         = t.usermeta
   let indices t          = t.indices
-  let deleted t          = t.deleted
+  let deleted t          = match t.deleted with Some x -> x | None -> false
 
   let set_value v t             = { t with value = v }
   let set_content_type ct t     = { t with content_type = ct }
@@ -187,20 +98,19 @@ module Content = struct
 
 end
 
+
 type 'a t = { contents  : Content.t list
 	    ; vclock    : string option
 	    ; unchanged : bool
 	    }
 
 let of_pb contents vclock unchanged =
-  let contents = List.map ~f:Content.of_pb contents in
   { contents  = contents
   ; vclock    = vclock
-  ; unchanged = Option.value ~default:false unchanged
+  ; unchanged = Core.Std.Option.value ~default:false unchanged
   }
 
-let to_pb t =
-  (List.map ~f:Content.to_pb t.contents, t.vclock)
+let to_pb t = (t.contents, t.vclock)
 
 let create c =
   { contents  = [c]
@@ -209,7 +119,7 @@ let create c =
   }
 
 let contents t        = t.contents
-let content t         = List.hd_exn (t.contents)
+let content t         = Core.Std.List.hd_exn (t.contents)
 let vclock t          = t.vclock
 let unchanged t       = t.unchanged
 

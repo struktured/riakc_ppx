@@ -1,6 +1,8 @@
 open Core.Std
 open Async.Std
 
+module BytesCache = Caches.BytesCache
+
 let fail s =
   printf "%s\n" s;
   shutdown 1
@@ -13,7 +15,7 @@ let exec () =
   Riakc.Conn.with_conn
     ~host
     ~port
-    (fun c -> Riakc.Conn.delete c ~b k)
+    (fun c -> BytesCache.delete (BytesCache.create ~conn:c ~bucket:b) k)
 
 let eval () =
   exec () >>| function
@@ -29,6 +31,8 @@ let eval () =
     | Error `Overflow           -> fail "Overflow"
     | Error `Unknown_type       -> fail "Unknown_type"
     | Error `Wrong_type         -> fail "Wrong_type"
+    | Error `Protobuf_encoder_error -> fail "Protobuf_encoder_error"
+
 
 let () =
   ignore (eval ());

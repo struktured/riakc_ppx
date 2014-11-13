@@ -1,52 +1,56 @@
-open Core.Std
 
+let encode_decode b =
+  let e = Protobuf.Encoder.create () in
+  Protobuf.Encoder.bytes b e; Protobuf.Encoder.to_bytes e
+ 
 module Quorum = struct
   type t =
-    | One
-    | All
-    | Default
-    | Quorum
-    | N of int
+    | One 
+    | All 
+    | Default  
+    | Quorum 
+    | N of int 
 
-  let one     = Int32.of_int_exn (-2)
-  let quorum  = Int32.of_int_exn (-3)
-  let all     = Int32.of_int_exn (-4)
-  let default = Int32.of_int_exn (-5)
-
-  let to_int32 = function
+  let one     = Core.Std.Int32.of_int_exn (-2)
+  let quorum  = Core.Std.Int32.of_int_exn (-3)
+  let all     = Core.Std.Int32.of_int_exn (-4)
+  let default = Core.Std.Int32.of_int_exn (-5)
+ 
+  let to_int32 =  
+    let conv x = 
+      match Core.Std.Int32.to_int x with Some n -> n | None -> raise (Invalid_argument (Core.Std.Int32.to_string x)) in
+   function
     | N n when n > 1000 ->
       (* Arbitrary and cheap, but n should always be small *)
       failwith "to_int32 - n too large"
     | N n ->
-      Int32.of_int_exn n
+      (*Core.Std.Int32.of_int_exn *) n
     | One ->
-      one
+      conv one
     | All ->
-      all
+      conv all
     | Default ->
-      default
+      conv default
     | Quorum ->
-      quorum
+      conv quorum
 
   let of_int32 = function
-    | n when Int32.equal n one ->
+    | n when Core.Std.Int32.equal n one ->
       One
-    | n when Int32.equal n all ->
+    | n when Core.Std.Int32.equal n all ->
       All
-    | n when Int32.equal n default ->
+    | n when Core.Std.Int32.equal n default ->
       Default
-    | n when Int32.equal n quorum ->
+    | n when Core.Std.Int32.equal n quorum ->
       Quorum
     | n -> begin
-      match Int32.to_int n with
+      match Core.Std.Int32.to_int n with
 	| Some n ->
 	  N n
 	| None ->
 	  failwith "of_int32 - n too large"
     end
-
-
-end
+end 
 
 module Get = struct
   type error = [ `Bad_conn | `Notfound | Response.error ]
@@ -56,35 +60,35 @@ module Get = struct
     | R           of Quorum.t
     | Pr          of Quorum.t
     | If_modified of string
-    | Basic_quorum
-    | Notfound_ok
+    | Basic_quorum 
+    | Notfound_ok 
     | Head
     | Deletedvclock
 
-  type get = { bucket        : string
-	     ; key           : string
-	     ; r             : Int32.t option
-	     ; pr            : Int32.t option
-	     ; basic_quorum  : bool
-	     ; notfound_ok   : bool
-	     ; if_modified   : string option
-	     ; head          : bool
-	     ; deletedvclock : bool
-	     }
-
-  let get_of_opts opts ~b ~k =
+  type get = { bucket        : string [@key 1]
+             ; key           : bytes [@key 2]
+             ; r             : int option [@key 3]
+             ; pr            : int option [@key 4]
+             ; basic_quorum  : bool option [@key 5]
+             ; notfound_ok   : bool option [@key 6]
+             ; if_modified   : string option [@key 7]
+             ; head          : bool option [@key 8]
+             ; deletedvclock : bool option [@key 9]
+  } [@@deriving protobuf] 
+  
+  let get_of_opts (opts:t list) ~b ~k =
     let g = { bucket        = b
 	    ; key           = k
 	    ; r             = None
 	    ; pr            = None
-	    ; basic_quorum  = false
-	    ; notfound_ok   = false
+	    ; basic_quorum  = None
+	    ; notfound_ok   = None
 	    ; if_modified   = None
-	    ; head          = false
-	    ; deletedvclock = false
+	    ; head          = None
+	    ; deletedvclock = None
 	    }
     in
-    List.fold_left
+    Core.Std.List.fold_left
       ~f:(fun g -> function
 	| Timeout _ ->
 	  g
@@ -95,59 +99,62 @@ module Get = struct
 	| If_modified s ->
 	  { g with if_modified = Some s }
 	| Basic_quorum ->
-	  { g with basic_quorum = true }
+	  { g with basic_quorum = Some true }
 	| Notfound_ok ->
-	  { g with notfound_ok = true }
+	  { g with notfound_ok = Some true }
 	| Head ->
-	  { g with head = true }
+	  { g with head = Some true }
 	| Deletedvclock ->
-	  { g with deletedvclock = true })
+	  { g with deletedvclock = Some true })
       ~init:g
       opts
 end
 
 module Put = struct
-  type error = [ `Bad_conn | Response.error ]
+  type error = [ `Bad_conn | Response.error | `Wrong_type ]
 
   type t =
-    | Timeout of int
-    | W       of Quorum.t
-    | Dw      of Quorum.t
-    | Pw      of Quorum.t
-    | Return_body
-    | If_not_modified
-    | If_none_match
-    | Return_head
+    | Timeout  of int
+    | W      of Quorum.t
+    | Dw     of Quorum.t
+    | Pw     of Quorum.t
+    | Return_body 
+    | If_not_modified 
+    | If_none_match  
+    | Return_head 
 
-  type put = { bucket          : string
-	     ; key             : string option
-	     ; vclock          : string option
-	     ; content         : Robj.Content.t
-	     ; w               : Int32.t option
-	     ; dw              : Int32.t option
-	     ; pw              : Int32.t option
-	     ; return_body     : bool
-	     ; if_not_modified : bool
-	     ; if_none_match   : bool
-	     ; return_head     : bool
-	     }
+  module Content = Robj.Content
+  module Robj = Robj
 
-  let put_of_opts opts ~b ~k robj =
+  type put = { bucket          : bytes [@key 1]
+             ; key             : bytes option [@key 2] [@default ""]
+             ; vclock          : bytes option [@key 3] [@default ""]
+             ; content         : Content.t [@key 4]
+             ; w               : int option [@key 5] [@default false]
+             ; dw              : int option [@key 6] [@default false]
+             ; return_body     : bool option [@key 7] [@default false]
+             ; pw              : int option [@key 8] [@default false]
+             ; if_not_modified : bool option [@key 9] [@default false]
+             ; if_none_match   : bool option [@key 10] [@default false]
+             ; return_head     : bool option [@key 11] [@default false]
+  } [@@deriving protobuf]
+
+  let put_of_opts opts ~b ~k (robj:'a Robj.t) =
     let p = { bucket          = b
-	    ; key             = k
+            ; key             = k 
 	    ; vclock          = Robj.vclock robj
 	    ; content         = Robj.content robj
 	    ; w               = None
 	    ; dw              = None
 	    ; pw              = None
-	    ; return_body     = false
-	    ; if_not_modified = false
-	    ; if_none_match   = false
-	    ; return_head     = false
+	    ; return_body     = None
+	    ; if_not_modified = None
+	    ; if_none_match   = None
+	    ; return_head     = None
 	    }
     in
-    List.fold_left
-      ~f:(fun p -> function
+    Core.Std.List.fold_left
+      ~f:(fun p -> function 
 	| Timeout _ ->
 	  p
 	| W n ->
@@ -157,13 +164,13 @@ module Put = struct
 	| Pw n ->
 	  { p with pw = Some (Quorum.to_int32 n) }
 	| Return_body ->
-	  { p with return_body = true }
+	  { p with return_body = Some true }
 	| If_not_modified ->
-	  { p with if_not_modified = true }
+	  { p with if_not_modified = Some true }
 	| If_none_match ->
-	  { p with if_none_match = true }
+	  { p with if_none_match = Some true }
 	| Return_head ->
-	  { p with return_head = true })
+	  { p with return_head = Some true }) 
       ~init:p
       opts
 end
@@ -172,24 +179,24 @@ module Delete = struct
   type error = [ `Bad_conn | Response.error ]
 
   type t =
-    | Timeout of int
+    | Timeout  of int
     | Rw      of Quorum.t
     | R       of Quorum.t
     | W       of Quorum.t
     | Pr      of Quorum.t
     | Pw      of Quorum.t
-    | Dw      of Quorum.t
+    | Dw      of Quorum.t 
 
-  type delete = { bucket : string
-		; key    : string
-		; rw     : Int32.t option
-		; vclock : string option
-		; r      : Int32.t option
-		; w      : Int32.t option
-		; pr     : Int32.t option
-		; pw     : Int32.t option
-		; dw     : Int32.t option
-		}
+  type delete = { bucket : string [@key 1]
+                ; key    : bytes [@key 2]
+                ; rw     : int option [@key 3]
+                ; vclock : string option [@key 4]
+                ; r      : int option [@key 5]
+                ; w      : int option [@key 6]
+                ; pr     : int option [@key 7]
+                ; pw     : int option [@key 8]
+                ; dw     : int option [@key 9]
+  } [@@deriving protobuf]
 
   let delete_of_opts opts ~b ~k =
     let d = { bucket = b
@@ -203,8 +210,8 @@ module Delete = struct
 	    ; dw     = None
 	    }
     in
-    List.fold_left
-      ~f:(fun d -> function
+    Core.Std.List.fold_left
+      ~f:(fun d -> function 
 	| Timeout _ ->
 	  d
 	| Rw n ->
@@ -218,7 +225,7 @@ module Delete = struct
 	| Pw n ->
 	  { d with pw = Some (Quorum.to_int32 n) }
 	| Dw n ->
-	  { d with dw = Some (Quorum.to_int32 n) })
+	  { d with dw = Some (Quorum.to_int32 n) }) 
       ~init:d
       opts
 end
@@ -227,16 +234,27 @@ module Index_search = struct
   type error = [ `Bad_conn | Response.error ]
 
   module Query = struct
-    type 'a range = { min          : 'a
-		    ; max          : 'a
-		    ; return_terms : bool
-		    }
+    type 'a range = { min          : 'a 
+                    ; max          : 'a 
+                    ; return_terms : bool 
+    } 
+
+    type string_range = { min          : string [@key 1]
+                    ; max          : string [@key 2]
+                    ; return_terms : bool [@key 3]
+    } [@@deriving protobuf]
+
+    type int_range = { min          : int [@key 1]
+                    ; max          : int [@key 2]
+                    ; return_terms : bool [@key 3]
+    } [@@deriving protobuf]
+
 
     type t =
-      | Eq_string    of string
-      | Eq_int       of int
-      | Range_string of string range
-      | Range_int    of int range
+      | Eq_string    [@key 1] of string
+      | Eq_int       [@key 2] of int 
+      | Range_string [@key 3] of string_range 
+      | Range_int    [@key 4] of int_range [@@deriving protobuf]
 
     let eq_string key =
       Eq_string key
@@ -251,25 +269,26 @@ module Index_search = struct
       Range_int { min; max; return_terms }
   end
 
+
   module Kontinuation = struct
-    type t = string
+    type t = string [@@deriving protobuf]
 
     let of_string s = s
     let to_string t = t
   end
 
   type t =
-    | Timeout      of int
-    | Max_results  of Int32.t
-    | Continuation of Kontinuation.t
+    | Timeout       of int 
+    | Max_results   of int
+    | Continuation  of Kontinuation.t 
 
-  type index_search = { bucket       : string
-		      ; index        : string
-		      ; query_type   : Query.t
-		      ; max_results  : Int32.t option
-		      ; continuation : Kontinuation.t option
-		      ; timeout      : int option
-		      }
+  type index_search = { bucket       : string [@key 1]
+                      ; index        : string [@key 2]
+                      ; query_type   : Query.t [@key 3]
+                      ; max_results  : int option [@key 4]
+                      ; continuation : Kontinuation.t option [@key 5]
+                      ; timeout      : int option [@key 6]
+  } [@@deriving protobuf]
 
   let index_search_of_opts opts ~b ~index ~query_type =
     let idx_s = { bucket       = b
@@ -280,7 +299,7 @@ module Index_search = struct
 		; timeout      = None
 		}
     in
-    List.fold_left
+    Core.Std.List.fold_left
       ~f:(fun idx_s -> function
 	| Timeout _ ->
 	  idx_s
