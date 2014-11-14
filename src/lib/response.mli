@@ -44,14 +44,14 @@ end
 
 val bucket_props : string -> (Props.t t, [> error ]) Result.t
 
-type pair = (bytes * string option) [@@deriving protobuf]
+type pair = (string * string option) [@@deriving protobuf]
 
 module List_keys : sig 
-  type t = bytes list * bool option
+  type t = string list * bool option
   include Protobuf_capable.S with type t:=t 
 end
 
-val list_keys    : string -> (bytes list t, [> error ]) Result.t
+val list_keys    : string -> (string list t, [> error ]) Result.t
 val delete       : string -> (unit t, [> error ]) Result.t
 
 module Get : sig
@@ -67,7 +67,7 @@ end
 val put          : string -> (([ `Maybe_siblings ] Robj.t * string option) t, [> error ]) Result.t
 
 module  Index_search : sig
-  type t = { keys         : bytes list 
+  type t = { keys         : string list 
                     ; results      : (string * string option) list 
                     ; continuation : string option 
                     ; d : bool option 

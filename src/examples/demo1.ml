@@ -4,7 +4,7 @@
 open Core.Std
 open Async.Std
 
-module BytesCache = Caches.BytesCache
+module StringCache = Caches.StringCache
 
 (*
  * Take a string of bytes and convert them to hex string
@@ -21,7 +21,7 @@ let hex_of_string =
 let print_contents contents =
   List.iter
     ~f:(fun content ->
-      let module C = BytesCache.Robj.Content in
+      let module C = StringCache.Robj.Content in
       printf "VALUE: %s\n" (C.value content))
     contents
 
@@ -41,10 +41,10 @@ let exec () =
     ~host
     ~port
     (fun c ->
-      let module R = BytesCache.Robj in
+      let module R = StringCache.Robj in
       let content  = R.Content.create "some random data" in
       let robj     = R.create content in
-      let cache = BytesCache.create ~conn:c ~bucket:"test_bucket" in
+      let cache = StringCache.create ~conn:c ~bucket:"test_bucket" in
       (*
        * Put takes a bucket, a key, and an optional list of
        * options.  In this case we are setting the
@@ -52,10 +52,10 @@ let exec () =
        * looks like after the put.  It is possible that
        * siblings were created.
        *)
-      BytesCache.put
+      StringCache.put
 	cache
 	~k:"test_key"
-	~opts:[BytesCache.Put.Return_body]
+	~opts:[StringCache.Put.Return_body]
 	robj)
 
 let eval () =
@@ -66,7 +66,7 @@ let eval () =
        * option], which is the key if Riak had to generate
        * it
        *)
-      let module R = BytesCache.Robj in
+      let module R = StringCache.Robj in
       (*
        * Extract the vclock, if it exists, and convert it to
        * to something printable

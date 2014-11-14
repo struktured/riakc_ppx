@@ -5,7 +5,7 @@ module Default_index = Cache.Default_index
 
 module CompositeKey = 
   struct
-    type t = { name: bytes [@key 1]; id: int [@key 2]} [@@deriving protobuf, show]
+    type t = { name: string [@key 1]; id: int [@key 2]} [@@deriving protobuf, show]
   end
 
 module VariantValue =
@@ -106,7 +106,7 @@ let exec () =
   let port = Int.of_string Sys.argv.(2) in
   let b    = Sys.argv.(3) in
   let k    = let open CompositeKey in {name = Sys.argv.(4); id = Random.int 1000} in
-  let v    = match (Bytes.uppercase Sys.argv.(5)) with "GOOD" -> VariantValue.GOOD | "BAD" -> VariantValue.BAD
+  let v    = match (String.uppercase Sys.argv.(5)) with "GOOD" -> VariantValue.GOOD | "BAD" -> VariantValue.BAD
     | _ -> failwith "Bad value. Must be GOOD or BAD" in
   Riakc.Conn.with_conn
     ~host

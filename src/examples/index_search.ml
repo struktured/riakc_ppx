@@ -3,7 +3,7 @@ open Async.Std
 
 module Default_index = Cache.Default_index
 
-module Cache = Cache.Make_with_index(Cache.Bytes)(Cache.Bytes)(Cache.Bytes)
+module Cache = Cache.Make_with_index(Cache.String)(Cache.String)(Cache.String)
 
 let hex_of_string =
   String.concat_map ~f:(fun c -> sprintf "%X" (Char.to_int c))

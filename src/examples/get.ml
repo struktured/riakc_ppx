@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-module BytesCache = Caches.BytesCache
+module StringCache = Caches.StringCache
 let option_to_string =
   Option.value ~default:"<none>"
 
@@ -9,7 +9,7 @@ let hex_of_string =
   String.concat_map ~f:(fun c -> sprintf "%X" (Char.to_int c))
 
 let print_usermeta content =
-  let module Robj = BytesCache.Robj in
+  let module Robj = StringCache.Robj in
   let module U = Robj.Usermeta in
   List.iter
     ~f:(fun u ->
@@ -17,7 +17,7 @@ let print_usermeta content =
     (Robj.Content.usermeta content)
 
 let print_indices content = printf ("print_indices: Unimplemented!")
-(*    let module Robj = BytesCache.Robj in
+(*    let module Robj = StringCache.Robj in
    let module I = Robj.Index in
   let index_value_to_string = function
     | I.String s  -> "String " ^ s
@@ -32,7 +32,7 @@ let print_indices content = printf ("print_indices: Unimplemented!")
 *)
 
 let print_value content =
-  let value = BytesCache.Robj.Content.value content in
+  let value = StringCache.Robj.Content.value content in
   List.iter
     ~f:(printf "CONTENT: %s\n")
     (String.split ~on:'\n' value)
@@ -40,7 +40,7 @@ let print_value content =
 let print_contents =
   List.iter
     ~f:(fun content ->
-      let module C = BytesCache.Robj.Content in
+      let module C = StringCache.Robj.Content in
       printf "CONTENT_TYPE: %s\n" (option_to_string (C.content_type content));
       printf "CHARSET: %s\n" (option_to_string (C.charset content));
       printf "CONTENT_ENCODING: %s\n" (option_to_string (C.content_encoding content));
@@ -60,12 +60,12 @@ let exec () =
   Riakc.Conn.with_conn
     ~host
     ~port
-    (fun c -> BytesCache.get (BytesCache.create ~conn:c ~bucket:b) k)
+    (fun c -> StringCache.get (StringCache.create ~conn:c ~bucket:b) k)
 
 let eval () =
   exec () >>| function
     | Ok robj -> begin
-      let module R = BytesCache.Robj in
+      let module R = StringCache.Robj in
       let vclock =
 	match R.vclock robj with
 	  | Some v ->

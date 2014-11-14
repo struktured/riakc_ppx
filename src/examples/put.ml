@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-module BytesCache = Caches.BytesCache
+module StringCache = Caches.StringCache
 
 let option_to_string =
   Option.value ~default:"<none>"
@@ -10,11 +10,11 @@ let hex_of_string =
   String.concat_map ~f:(fun c -> sprintf "%X" (Char.to_int c))
 
 let print_usermeta content =
-  let module U = BytesCache.Robj.Usermeta in
+  let module U = StringCache.Robj.Usermeta in
   List.iter
     ~f:(fun u ->
       printf "USERMETA: %s = %s\n" (U.key u) (option_to_string (U.value u)))
-    (BytesCache.Robj.Content.usermeta content)
+    (StringCache.Robj.Content.usermeta content)
   
 let print_indices content = 
   let module I = Cache.Default_index in
@@ -26,12 +26,12 @@ let print_indices content =
   in
   List.iter
     ~f:(fun i ->
-      printf "INDEX: %s = %s\n" (BytesCache.Robj.Index.key i) 
-      (option_to_string (Option.map (BytesCache.Robj.Index.value i) index_value_to_string)))
-    (BytesCache.Robj.Content.indices content)
+      printf "INDEX: %s = %s\n" (StringCache.Robj.Index.key i) 
+      (option_to_string (Option.map (StringCache.Robj.Index.value i) index_value_to_string)))
+    (StringCache.Robj.Content.indices content)
 
 let print_value content =
-  let value = BytesCache.Robj.Content.value content in
+  let value = StringCache.Robj.Content.value content in
   List.iter
     ~f:(printf "CONTENT: %s\n")
     (String.split ~on:'\n' value)
@@ -39,7 +39,7 @@ let print_value content =
 let print_contents =
   List.iter
     ~f:(fun content ->
-      let module C = BytesCache.Robj.Content in
+      let module C = StringCache.Robj.Content in
       printf "CONTENT_TYPE: %s\n" (option_to_string (C.content_type content));
       printf "CHARSET: %s\n" (option_to_string (C.charset content));
       printf "CONTENT_ENCODING: %s\n" (option_to_string (C.content_encoding content));
@@ -52,7 +52,7 @@ let fail s =
   shutdown 1
 
 let parse_index s = 
-  let module R = BytesCache.Robj in
+  let module R = StringCache.Robj in
   match String.lsplit2 ~on:':' s with
     | Some ("bin", kv) -> begin
       match String.lsplit2 ~on:':' kv with
@@ -73,7 +73,7 @@ let parse_index s =
 
 let rec add_2i r idx = 
   if idx < Array.length Sys.argv then
-    let module R = BytesCache.Robj in
+    let module R = StringCache.Robj in
     let content = List.hd_exn (R.contents r) in
     let indices = R.Content.indices content in
     add_2i
@@ -92,20 +92,20 @@ let exec () =
   let b    = Sys.argv.(3) in
   let k    = Sys.argv.(4) in
   let v    = Sys.argv.(5) in
-  BytesCache.with_cache
+  StringCache.with_cache
     ~host
     ~port
     ~bucket:b
     (fun c ->
-      let module R = BytesCache.Robj in
+      let module R = StringCache.Robj in
       let robj = R.create (R.Content.create v) in
       let robj = add_2i robj 6 in 
-      BytesCache.put c ~k ~opts:[BytesCache.Put.Return_body] robj)
+      StringCache.put c ~k ~opts:[StringCache.Put.Return_body] robj)
 
 let eval () =
   exec () >>| function
     | Ok (robj, _) -> begin
-      let module R = BytesCache.Robj in
+      let module R = StringCache.Robj in
       let vclock =
 	match R.vclock robj with
 	  | Some v ->

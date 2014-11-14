@@ -66,7 +66,7 @@ module Get = struct
     | Deletedvclock
 
   type get = { bucket        : string [@key 1]
-             ; key           : bytes [@key 2]
+             ; key           : string [@key 2]
              ; r             : int option [@key 3]
              ; pr            : int option [@key 4]
              ; basic_quorum  : bool option [@key 5]
@@ -126,9 +126,9 @@ module Put = struct
   module Content = Robj.Content
   module Robj = Robj
 
-  type put = { bucket          : bytes [@key 1]
-             ; key             : bytes option [@key 2] [@default ""]
-             ; vclock          : bytes option [@key 3] [@default ""]
+  type put = { bucket          : string [@key 1]
+             ; key             : string option [@key 2] [@default ""]
+             ; vclock          : string option [@key 3] [@default ""]
              ; content         : Content.t [@key 4]
              ; w               : int option [@key 5] [@default false]
              ; dw              : int option [@key 6] [@default false]
@@ -188,7 +188,7 @@ module Delete = struct
     | Dw      of Quorum.t 
 
   type delete = { bucket : string [@key 1]
-                ; key    : bytes [@key 2]
+                ; key    : string [@key 2]
                 ; rw     : int option [@key 3]
                 ; vclock : string option [@key 4]
                 ; r      : int option [@key 5]

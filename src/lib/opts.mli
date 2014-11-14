@@ -25,7 +25,7 @@ sig
     | Deletedvclock 
 
   type get = { bucket        : string 
-             ; key           : bytes 
+             ; key           : string 
              ; r             : int option 
              ; pr            : int option
              ; basic_quorum : bool option
@@ -39,7 +39,7 @@ sig
   val get_to_protobuf : get -> Protobuf.Encoder.t -> unit
 
 
-  val get_of_opts : t list -> b:string -> k:bytes -> get
+  val get_of_opts : t list -> b:string -> k:string -> get
 
 end
 
@@ -59,7 +59,7 @@ sig
     | Return_head 
 
   type put = { bucket          : string
-             ; key             : bytes option
+             ; key             : string option
              ; vclock          : string option
              ; content         : Robj.Content.t
              ; w               : int option
@@ -74,7 +74,7 @@ sig
   val put_from_protobuf : Protobuf.Decoder.t -> put
   val put_to_protobuf : put -> Protobuf.Encoder.t -> unit
 
-  val put_of_opts : t list -> b:string -> k:bytes option -> [ `No_siblings ] Robj.t -> put
+  val put_of_opts : t list -> b:string -> k:string option -> [ `No_siblings ] Robj.t -> put
 end
 
 module Delete : 
@@ -91,7 +91,7 @@ sig
     | Dw      of Quorum.t 
 
   type delete = { bucket : string 
-                ; key    : bytes 
+                ; key    : string 
                 ; rw     : int option 
                 ; vclock : string option 
                 ; r      : int option 
@@ -104,7 +104,7 @@ sig
   val delete_from_protobuf : Protobuf.Decoder.t -> delete
   val delete_to_protobuf : delete -> Protobuf.Encoder.t -> unit
 
-  val delete_of_opts : t list -> b:string -> k:bytes  -> delete
+  val delete_of_opts : t list -> b:string -> k:string  -> delete
 end
 
 module Index_search : sig

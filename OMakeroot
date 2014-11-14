@@ -64,7 +64,7 @@ if $(not $(OCAMLFIND_EXISTS))
 NATIVE_ENABLED = $(OCAMLOPT_EXISTS)
 BYTE_ENABLED = $(OCAMLC_EXISTS)
 
-OCAMLFLAGS = -bin-annot -annot -warn-error P -thread
+OCAMLFLAGS = -safe-string -bin-annot -annot -warn-error P -thread
 OCAMLCFLAGS = 
 OCAML_NATIVE_LINK_FLAGS =
 OCAMLPACKS[] = $(LIB_PACKAGES)

@@ -1,48 +1,30 @@
 open Async.Std
 
 module Result = Core.Std.Result
-module String = Core.Std.String
 module Option = Core.Std.Option
 
-let encode_decode b =
+let encode_decode (b:string) =
     let e = Protobuf.Encoder.create () in
-    Protobuf.Encoder.bytes b e; Protobuf.Encoder.to_bytes e
+    Protobuf.Encoder.bytes (Bytes.of_string b) e; Protobuf.Encoder.to_string e
 
 let serialize_proto to_protobuf v = 
- let e = Protobuf.Encoder.create () in to_protobuf v e; Protobuf.Encoder.to_bytes e
+ let e = Protobuf.Encoder.create () in to_protobuf v e; Protobuf.Encoder.to_string e
 
-let deserialize_proto from_protobuf (b:bytes) = 
-  let d = Protobuf.Decoder.of_bytes b in from_protobuf d
+let deserialize_proto from_protobuf (b:string) = 
+  let d = Protobuf.Decoder.of_string b in from_protobuf d
 
-module Bytes = 
-struct
-  include Bytes
-  let to_protobuf t e = Protobuf.Encoder.bytes t e
-  let from_protobuf d = Protobuf.Decoder.bytes d
-  let show b = b
-end
+module Bytes = Protobuf_capables.Bytes
+module String = Protobuf_capables.String
+module Bool = Protobuf_capables.Bool
+module Int = Protobuf_capables.Int
 
-module Bool = struct
-  include Core.Std.Bool
-  let to_protobuf t e = Protobuf.Encoder.bits32 (if t then Int32.one else Int32.zero) e
-  let from_protobuf d = (Protobuf.Decoder.bits32 d) == Int32.one
-  let show b = to_string b
-end
-
-module Int = struct
-  include Core.Std.Int
-  let to_protobuf t e = Protobuf.Encoder.varint (Int64.of_int t) e
-  let from_protobuf d = Int64.to_int (Protobuf.Decoder.varint d)
-  let show b = to_string b
-end
-
-module Default_usermeta = Bytes
+module Default_usermeta = String
 
 module Default_index = struct 
-  type t =    String [@key 1] of bytes [@key 2]
+  type t =    String [@key 1] of string [@key 2]
              | Integer [@key 3] of int [@key 4]
-             | Bad_int [@key 5] of bytes [@key 6]
-             | Unknown [@key 7] of bytes [@key 8] [@@deriving protobuf, show]
+             | Bad_int [@key 5] of string [@key 6]
+             | Unknown [@key 7] of string [@key 8] [@@deriving protobuf, show]
 end
 
 
@@ -79,9 +61,9 @@ module Robj = struct
   
 module Link = 
 struct
-  type t = { bucket : bytes option 
+  type t = { bucket : string option 
            ; key    : Key.t option 
-           ; tag    : bytes option 
+           ; tag    : string option 
   } 
 
   let bucket t = t.bucket
@@ -107,9 +89,9 @@ struct
 end
 
 module type Unsafe_Pair = sig
-  type t = {key: bytes ; value : bytes option}
-  val value : t -> bytes option
-  val key : t -> bytes
+  type t = {key: string ; value : string option}
+  val value : t -> string option
+  val key : t -> string
 end
 
 module Pair(Unsafe: Unsafe_Pair) (V:Protobuf_capable.S) = struct
@@ -140,10 +122,10 @@ module Index = Pair(Unsafe_Robj.Index)(Index_value)
 
 module Content = struct
   type t = { value            : Value.t 
-  ; content_type     : bytes option 
-  ; charset          : bytes option 
-  ; content_encoding : bytes option 
-  ; vtag             : bytes option 
+  ; content_type     : string option 
+  ; charset          : string option 
+  ; content_encoding : string option 
+  ; vtag             : string option 
   ; links            : Link.t list 
   ; last_mod         : Int32.t option 
   ; last_mod_usec    : Int32.t option 
@@ -254,14 +236,14 @@ end
 
  let create ~conn ~bucket = {conn;bucket}
   let list_keys_stream cache consumer = Conn.list_keys_stream cache.conn cache.bucket
-    (fun bytes -> let keys = List.map (fun b -> deserialize_key b) bytes in consumer keys) 
+    (fun string -> let keys = List.map (fun b -> deserialize_key b) string in consumer keys) 
 
 let with_cache ~host ~port ~bucket f =
   Conn.with_conn host port (fun conn -> (f (create ~conn ~bucket)))
 
   let list_keys cache = Conn.list_keys cache.conn cache.bucket >>| function
     | Result.Ok keys ->
-        Result.Ok (List.map (fun b -> Key.from_protobuf (Protobuf.Decoder.of_bytes (encode_decode b))) keys)
+        Result.Ok (List.map (fun (b:string) -> Key.from_protobuf (Protobuf.Decoder.of_string (encode_decode b))) keys)
     | Result.Error err ->
       Result.Error err
 

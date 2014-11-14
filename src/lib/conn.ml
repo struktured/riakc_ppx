@@ -26,7 +26,7 @@ let parse_length preamble =
 let read_payload r preamble =
   let open Deferred.Result.Monad_infix in
   parse_length preamble >>= fun resp_len ->
-  let payload = Bytes.create resp_len in
+  let payload = String.create resp_len in
   read_str r 0 payload
 
 let rec read_response r f c =

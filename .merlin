@@ -4,3 +4,4 @@ S src/examples
 S src/tests
 B _build/lib
 B _build/examples
+FLG -safe-string

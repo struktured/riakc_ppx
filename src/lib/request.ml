@@ -6,16 +6,16 @@ module Result = Core.Std.Result
 
 module E = Protobuf.Encoder
 
-let wrap_request (mc:'a) s =
+let wrap_request (mc:'a) (s:string) =
   (* Add 1 for the mc *)
-  let l = Bytes.length s + 1 in
+  let l = String.length s + 1 in
   let preamble_mc = Bytes.create 5 in
   Bytes.set preamble_mc 0 (Core.Std.Char.of_int_exn ((l lsr 24) land 0xff));
   Bytes.set preamble_mc 1 (Core.Std.Char.of_int_exn ((l lsr 16) land 0xff));
   Bytes.set preamble_mc 2 (Core.Std.Char.of_int_exn ((l lsr 8) land 0xff));
   Bytes.set preamble_mc 3 (Core.Std.Char.of_int_exn (l land 0xff));
   Bytes.set preamble_mc 4 mc;
-  preamble_mc ^ s
+  (Bytes.to_string preamble_mc) ^ s
 type error = [`Unknown_type]
 let ping () =
   Result.Ok (wrap_request '\x01' "")
@@ -48,7 +48,7 @@ let list_keys bucket () =
   let open Result.Monad_infix in
   let e = E.create () in
   List_keys.to_protobuf bucket e; 
-  Result.Ok (wrap_request '\x11' (E.to_bytes e))
+  Result.Ok (wrap_request '\x11' (E.to_string e))
 
 let get g () =
   let module Get = Opts.Get in
@@ -56,7 +56,7 @@ let get g () =
   let open Result.Monad_infix in
   let e = E.create () in 
   Get.get_to_protobuf g e;
-  Core.Std.Ok (wrap_request '\x09' (E.to_bytes e))
+  Core.Std.Ok (wrap_request '\x09' (E.to_string e))
 
 let put p () =
   let module Put = Opts.Put in
@@ -64,7 +64,7 @@ let put p () =
   let open Put in
   let e = E.create () in
   Put.put_to_protobuf p e;
-  Result.Ok (wrap_request '\x0B' (E.to_bytes e))
+  Result.Ok (wrap_request '\x0B' (E.to_string e))
 
 let delete d () =
   let module Delete = Opts.Delete in
@@ -72,19 +72,19 @@ let delete d () =
   let open Result.Monad_infix in
   let e = E.create () in
   Delete.delete_to_protobuf d e; 
-  Result.Ok (wrap_request '\x0D' (E.to_bytes e))
+  Result.Ok (wrap_request '\x0D' (E.to_string e))
 
 type decorated_index_search = {
-    bucket: bytes [@key 1];
-    idx : bytes [@key 2];
+    bucket: string [@key 1];
+    idx : string [@key 2];
     query_type : Opts.Index_search.Query.t [@key 3];
     key: (* Key.t *) string option [@key 4];
-    min : bytes option [@key 5];
-    max : bytes option [@key 6];
+    min : string option [@key 5];
+    max : string option [@key 6];
     rt : bool option [@key 7];
     stream : bool [@key 8];
     max_results: int option [@key 9];
-    cont: bytes option [@key 10]
+    cont: string option [@key 10]
   } [@@deriving protobuf]
 
 

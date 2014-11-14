@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-module BytesCache = Caches.BytesCache
+module StringCache = Caches.StringCache
 
 let fail s =
   printf "%s\n" s;
@@ -15,7 +15,7 @@ let exec () =
   Riakc.Conn.with_conn
     ~host
     ~port
-    (fun c -> BytesCache.delete (BytesCache.create ~conn:c ~bucket:b) k)
+    (fun c -> StringCache.delete (StringCache.create ~conn:c ~bucket:b) k)
 
 let eval () =
   exec () >>| function

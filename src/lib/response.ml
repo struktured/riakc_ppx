@@ -45,12 +45,12 @@ let run mc mc_payload f =
   let open Result.Monad_infix in
   parse_mc mc_payload >>= function
     | (p_mc, payload) when p_mc = mc -> begin
-      (*print_bytes ("got payload: " ^ (Bitstring.string_of_bitstring payload));  *)
+      (*print_string ("got payload: " ^ (Bitstring.string_of_bitstring payload));  *)
       let decoder = Protobuf.Decoder.of_string (Bitstring.string_of_bitstring payload) in
       let r = f decoder in
       Result.Ok r
     end
-    | (p_mc, payload) -> print_bytes ("payload error: " ^ (Bitstring.string_of_bitstring payload)); 
+    | (p_mc, payload) -> print_string ("payload error: " ^ (Bitstring.string_of_bitstring payload)); 
       Result.Error `Bad_payload
 
 
@@ -90,10 +90,10 @@ let bucket_props payload = let open Result.Monad_infix in
  run '\x14' payload Message.from_protobuf >>= fun bucket_props -> let props = bucket_props.value in Result.Ok (Done props)
 
 
-type pair = (bytes * string option) [@@deriving protobuf] 
+type pair = (string * string option) [@@deriving protobuf] 
 
 module List_keys = struct 
-  type t = bytes list [@key 1] * (bool option [@key 2] [@default false]) [@@deriving protobuf] 
+  type t = string list [@key 1] * (bool option [@key 2] [@default false]) [@@deriving protobuf] 
 end
 
 let list_keys payload =
@@ -132,7 +132,7 @@ let put payload =
   Result.Ok (Done (Robj.of_pb c vclock None, key))
 
 module Index_search = struct
-  type t = { keys         : bytes list [@key 1]
+  type t = { keys         : string list [@key 1]
                     ; results      : (string * string option) list [@key 2]
                     ; continuation : string option [@key 3]
                     ; d : bool option [@key 4]

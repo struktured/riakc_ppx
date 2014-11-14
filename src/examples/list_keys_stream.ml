@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-module BytesCache = Caches.BytesCache
+module StringCache = Caches.StringCache
 
 let option_to_string = function
   | Some v -> v
@@ -22,7 +22,7 @@ let exec () =
   Riakc.Conn.with_conn
     ~host
     ~port
-    (fun c -> BytesCache.list_keys_stream (BytesCache.create c b) consumer)
+    (fun c -> StringCache.list_keys_stream (StringCache.create c b) consumer)
 
 let eval () =
   exec () >>| function
