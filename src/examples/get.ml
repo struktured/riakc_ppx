@@ -16,9 +16,9 @@ let print_usermeta content =
       printf "USERMETA: %s = %s\n" (U.key u) (option_to_string (U.value u)))
     (Robj.Content.usermeta content)
 
-let print_indices content = printf ("print_indices: Unimplemented!")
-(*    let module Robj = StringCache.Robj in
-   let module I = Robj.Index in
+let print_indices content = 
+    let module Robj = StringCache.Robj in
+   let module I = Cache.Default_index in
   let index_value_to_string = function
     | I.String s  -> "String " ^ s
     | I.Integer i -> "Integer " ^ (Int.to_string i)
@@ -27,9 +27,9 @@ let print_indices content = printf ("print_indices: Unimplemented!")
   in
   List.iter
     ~f:(fun i ->
-      printf "INDEX: %s = %s\n" (I.key i) (index_value_to_string (I.value i)))
-    (Riakc.Robj.Content.indices content)
-*)
+      printf "INDEX: %s = %s\n" (StringCache.Robj.Index.key i) (option_to_string (Option.map (StringCache.Robj.Index.value i) index_value_to_string)))
+    (StringCache.Robj.Content.indices content)
+
 
 let print_value content =
   let value = StringCache.Robj.Content.value content in
