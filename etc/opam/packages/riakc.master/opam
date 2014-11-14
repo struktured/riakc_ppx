@@ -1,5 +1,5 @@
-opam-version: "1"
-maintainer: "agarwal1975@gmail.com"
+opam-version: "1.2"
+maintainer: "agarwal1975@gmail.com,carmelo.piccione@gmail.com"
 build: [
   ["omake" "-j2"]
   ["omake" "install"]
@@ -13,5 +13,6 @@ depends: [
   "ocamlfind"
   "core" {>= "109.12.00"}
   "async"
-  "protobuf"
+  "ppx_deriving_protobuf"
+  "bitstring"
 ]
