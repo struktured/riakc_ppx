@@ -101,22 +101,28 @@ let rec add_2i r idx =
     r
 
 
+let argv_or index default_val = if index < (Array.length Sys.argv) then Sys.argv.(index) else default_val
+
 let exec () =
-  let host = Sys.argv.(1) in
-  let port = Int.of_string Sys.argv.(2) in
-  let b    = Sys.argv.(3) in
-  let k    = let open CompositeKey in {name = Sys.argv.(4); id = Random.int 1000} in
-  let v    = match (String.uppercase Sys.argv.(5)) with "GOOD" -> VariantValue.GOOD | "BAD" -> VariantValue.BAD
+  let _ = Random.self_init () in
+  let host = argv_or 1 "localhost" in
+  let port = Int.of_string (argv_or 2 "8087") in
+  let b    = argv_or 3 "complex-bucket" in
+  let k    = let open CompositeKey in {name = argv_or 4 "foobar"; id = Random.int 1000} in
+  print_endline ("CompositeKey is: " ^ (CompositeKey.show k));
+  let v    = match (String.uppercase (argv_or 5 (if (Random.bool()) then "GOOD" else "BAD"))) with 
+    | "GOOD" -> VariantValue.GOOD 
+    | "BAD" -> VariantValue.BAD
     | _ -> failwith "Bad value. Must be GOOD or BAD" in
-  Riakc.Conn.with_conn
+  Cache.with_cache
     ~host
     ~port
+    ~bucket:b
     (fun c ->
       let module R = Cache.Robj in
       let robj = R.of_value v in
-      (*let robj = add_2i robj 6 ina *)
-      let cache = Cache.create ~conn:c ~bucket:b in 
-      Cache.put cache ~k ~opts:[Cache.Put.Return_body] robj)
+      let robj = add_2i robj 6 in 
+      Cache.put c ~k ~opts:[Cache.Put.Return_body] robj)
 
 let eval () =
   exec () >>| function
