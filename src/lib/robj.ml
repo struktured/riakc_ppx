@@ -118,6 +118,8 @@ let create c =
   ; unchanged = false
   }
 
+let of_value v = create (Content.create v)
+
 let contents t        = t.contents
 let content t         = Core.Std.List.hd_exn (t.contents)
 let vclock t          = t.vclock

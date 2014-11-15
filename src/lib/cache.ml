@@ -209,6 +209,8 @@ let create c =
   ; unchanged = false
   }
 
+let of_value v = create (Content.create v)
+
 let create_siblings contents =
   { contents  = contents
   ; vclock    = None

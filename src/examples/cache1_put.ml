@@ -113,7 +113,7 @@ let exec () =
     ~port
     (fun c ->
       let module R = Cache.Robj in
-      let robj = R.create (R.Content.create v) in
+      let robj = R.of_value v in
       (*let robj = add_2i robj 6 ina *)
       let cache = Cache.create ~conn:c ~bucket:b in 
       Cache.put cache ~k ~opts:[Cache.Put.Return_body] robj)
