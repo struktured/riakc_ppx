@@ -1,6 +1,5 @@
 open Async.Std
 open Core.Std
-module Result = Core.Std.Result
 module String = Core.Std.String
 
 
