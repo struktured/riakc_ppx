@@ -1,5 +1,5 @@
-open Async.Std
 open Core.Std
+open Async.Std
 module String = Core.Std.String
 
 
@@ -14,10 +14,10 @@ let rec read_str r pos s =
       if (pos + l) <> String.length s then
 	read_str r (pos + l) s
       else
-	Deferred.return (Result.Ok s)
+	Deferred.return (Ok s)
     end
     | `Eof ->
-      Deferred.return (Result.Error `Bad_conn)
+      Deferred.return (Error `Bad_conn)
 
 let parse_length preamble =
   Deferred.return (Response.parse_length preamble)
@@ -41,7 +41,7 @@ let rec read_response r f c =
     | Response.Done resp ->
       let open Deferred.Monad_infix in
       c resp >>= fun () ->
-      Deferred.return (Result.Ok ())
+      Deferred.return (Ok ())
 
 let do_request_stream t c g f =
   let open Deferred.Result.Monad_infix in
@@ -55,13 +55,13 @@ let do_request t g f =
   let (r, w) = Pipe.create () in
   let c x    = Pipe.write_without_pushback w x; Deferred.return () in
   do_request_stream t c g f >>= function
-    | Result.Ok () -> begin
+    | Ok () -> begin
       Pipe.close w;
       Pipe.to_list r >>| fun l ->
-      Result.Ok l
+      Ok l
     end
-    | Result.Error err ->
-      Deferred.return (Result.Error err)
+    | Error err ->
+      Deferred.return (Error err)
 
 let gen_consumer w = Pipe.write_without_pushback w |> Deferred.return
 
@@ -70,24 +70,24 @@ let connect ~host ~port =
     Tcp.connect (Tcp.to_host_and_port host port)
   in
   Monitor.try_with connect >>| function
-    | Result.Ok (_s, r, w) ->
-      Result.Ok { r; w }
-    | Result.Error _exn ->
-      Result.Error `Bad_conn
+    | Ok (_s, r, w) ->
+      Ok { r; w }
+    | Error _exn ->
+      Error `Bad_conn
 
 let close t =
   Writer.close t.w >>= fun () ->
-  Deferred.return (Result.Ok ())
+  Deferred.return (Ok ())
 
 let with_conn ~host ~port f =
   connect host port >>= function
-    | Result.Ok c -> begin
+    | Ok c -> begin
       f c    >>= fun r ->
       close c >>= fun _ ->
       Deferred.return r
     end
-    | Result.Error err ->
-      Deferred.return (Result.Error err)
+    | Error err ->
+      Deferred.return (Error err)
 
 let ping t =
   do_request
@@ -95,12 +95,12 @@ let ping t =
     Request.ping
     Response.ping
   >>| function
-    | Result.Ok [()] ->
-      Result.Ok ()
-    | Result.Ok _ ->
-      Result.Error `Wrong_type
-    | Result.Error err ->
-      Result.Error err
+    | Ok [()] ->
+      Ok ()
+    | Ok _ ->
+      Error `Wrong_type
+    | Error err ->
+      Error err
 
 let client_id t =
   do_request
@@ -108,12 +108,12 @@ let client_id t =
     Request.client_id
     Response.client_id
   >>| function
-    | Result.Ok [client_id] ->
-      Result.Ok client_id
-    | Result.Ok _ ->
-      Result.Error `Wrong_type
-    | Result.Error err ->
-      Result.Error err
+    | Ok [client_id] ->
+      Ok client_id
+    | Ok _ ->
+      Error `Wrong_type
+    | Error err ->
+      Error err
 
 let server_info t =
   do_request
@@ -121,12 +121,12 @@ let server_info t =
     Request.server_info
     Response.server_info
   >>| function
-    | Result.Ok [(node, version)] ->
-      Result.Ok (node, version)
-    | Result.Ok _ ->
-      Result.Error `Wrong_type
-    | Result.Error err ->
-      Result.Error err
+    | Ok [(node, version)] ->
+      Ok (node, version)
+    | Ok _ ->
+      Error `Wrong_type
+    | Error err ->
+      Error err
 
 let bucket_props t bucket =
   do_request
@@ -134,12 +134,12 @@ let bucket_props t bucket =
     (Request.bucket_props bucket)
     Response.bucket_props
   >>| function
-    | Result.Ok [props] ->
-      Result.Ok props
-    | Result.Ok _ ->
-      Result.Error `Wrong_type
-    | Result.Error err ->
-      Result.Error err
+    | Ok [props] ->
+      Ok props
+    | Ok _ ->
+      Error `Wrong_type
+    | Error err ->
+      Error err
 
 let list_buckets t =
   do_request
@@ -147,12 +147,12 @@ let list_buckets t =
     Request.list_buckets
     Response.list_buckets
   >>| function
-      Result.Ok [buckets] ->
-      Result.Ok buckets
-    | Result.Ok _ ->
-      Result.Error `Wrong_type
-    | Result.Error err ->
-      Result.Error err
+      Ok [buckets] ->
+      Ok buckets
+    | Ok _ ->
+      Error `Wrong_type
+    | Error err ->
+      Error err
 
 
 let list_keys_stream t bucket consumer =
