@@ -1,11 +1,12 @@
-module BytesCache = Cache.Make(Cache.Bytes)(Cache.Bytes)
-module BytesBoolCache = Cache.Make(Cache.Bytes)(Cache.Bool)
-module BytesIntCache = Cache.Make(Cache.Bytes)(Cache.Int)
-module IntBytesCache = Cache.Make(Cache.Int)(Cache.Bytes)
-module IntBoolCache = Cache.Make(Cache.Int)(Cache.Bool)
-module StringCache = Cache.Make(Cache.String)(Cache.String)
-module StringBoolCache = Cache.Make(Cache.String)(Cache.Bool)
-module StringIntCache = Cache.Make(Cache.String)(Cache.Int)
+open Protobuf_capables
+module BytesCache = Cache.Make(Bytes)(Bytes)
+module BytesBoolCache = Cache.Make(Bytes)(Bool)
+module BytesIntCache = Cache.Make(Bytes)(Int)
+module IntBytesCache = Cache.Make(Int)(Bytes)
+module IntBoolCache = Cache.Make(Int)(Bool)
+module StringCache = Cache.Make(String)(String)
+module StringBoolCache = Cache.Make(String)(Bool)
+module StringIntCache = Cache.Make(String)(Int)
 
 
 

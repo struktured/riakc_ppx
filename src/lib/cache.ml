@@ -2,6 +2,7 @@ open Async.Std
 
 module Result = Core.Std.Result
 module Option = Core.Std.Option
+module Deferred = Async.Std.Deferred
 
 let encode_decode (b:string) =
     let e = Protobuf.Encoder.create () in
