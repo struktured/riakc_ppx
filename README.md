@@ -43,45 +43,4 @@ The following will clone the repository, build locally, and then pin to opam:
 
 There are examples of using each API command in the example directory.  There is also a minor test suite in the tests directory.
 
-The two API entry points are Cache, Robj, and Con..
-
-
-
-
-
-
-
-
-
-
-
-
-
-https://github.com/orbitz/ocaml-riakc/issues/
-* Releases
-This represents only the features that are available in tagged releases.
-** DONE 3.0.0
-   - [X] Streaming support for list_keys
-   - [X] Non-streaming support for 2i searches
-   - [X] Misc API changes
-** DONE 2.0.0
-   - [X] Add support for setting 2i in an object.  Indices and Usermeta data types have been renamed.  Querying by 2i is not yet supporrted.
-** DONE 1.0.0
-   - [X] Requires Core >= 109.12.00 due to Async change and Ocaml >= 4.00
-   - [X] Links are now supported in GET/PUT
-   - [X] A note on the version number - this only represents that this release is not backwards compatible with 0.0.0, not some new level of stability.
-** DONE 0.0.0
-*** Methods
-    - [X] ping
-    - [X] client_id
-    - [X] server_info
-    - [X] list_buckets
-    - [X] list_keys
-    - [X] bucket_props
-    - [X] get
-    - [X] put
-    - [X] delete
-* Future Features
-  - Timeouts on operations
-  - 2i streaming support
-
+The two API entry points are Cache, Robj, and Con.
