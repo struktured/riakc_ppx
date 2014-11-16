@@ -122,7 +122,7 @@ let exec () =
       let module R = Cache.Robj in
       let robj = R.of_value v in
       let robj = add_2i robj 6 in 
-      Cache.put c ~k ~opts:[Cache.Put.Return_body] robj)
+      Cache.put c ~k ~opts:[Opts.Put.Return_body] robj)
 
 let eval () =
   exec () >>| function

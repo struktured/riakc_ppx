@@ -55,7 +55,7 @@ let exec () =
       StringCache.put
 	cache
 	~k:"test_key"
-	~opts:[StringCache.Put.Return_body]
+	~opts:[Opts.Put.Return_body]
 	robj)
 
 let eval () =

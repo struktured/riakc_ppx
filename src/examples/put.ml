@@ -100,7 +100,7 @@ let exec () =
       let module R = StringCache.Robj in
       let robj = R.create (R.Content.create v) in
       let robj = add_2i robj 6 in 
-      StringCache.put c ~k ~opts:[StringCache.Put.Return_body] robj)
+      StringCache.put c ~k ~opts:[Opts.Put.Return_body] robj)
 
 let eval () =
   exec () >>| function

@@ -95,7 +95,7 @@ let get_found_test c =
   Deferred.return (Ok ())
 
 let put_return_body_test c =
-  let open StringCache.Put in
+  let open Opts.Put in
   let module Robj = StringCache.Robj in
   let robj =
     Robj.create
