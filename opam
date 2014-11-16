@@ -1,5 +1,9 @@
 opam-version: "1.2"
-maintainer: "carmelo.piccione+riakc@gmail.com"
+name: "riakc_ppx"
+author : "Carmelo Piccione carmelo.piccione+riakc_ppx@gmail.com"
+maintainer: "carmelo.piccione+riakc_ppx@gmail.com"
+version: "1.0-beta"
+homepage: "https://github.com/struktured/riakc_ppx"
 build: [
   ["omake" "-j4"]
   ["omake" "install"]
