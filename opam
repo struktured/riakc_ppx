@@ -1,12 +1,12 @@
 opam-version: "1.2"
-maintainer: "agarwal1975@gmail.com,carmelo.piccione@gmail.com"
+maintainer: "carmelo.piccione@gmail.com"
 build: [
-  ["omake" "-j2"]
+  ["omake" "-j4"]
   ["omake" "install"]
 ]
 
 remove: [
-  ["ocamlfind" "remove" "riakc"]
+  ["ocamlfind" "remove" "riakc-ppx"]
 ]
 
 depends: [
