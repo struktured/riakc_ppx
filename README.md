@@ -41,6 +41,37 @@ The following will clone the repository, build locally, and then pin to opam:
 
 # Examples
 
-There are examples of using each API command in the example directory.  There is also a minor test suite in the tests directory.
+There are examples of using each API command in the example directory.  There is also a minor test suite in the tests directory. The primary API entry points are Cache, Robj, and Conn.
 
-The two API entry points are Cache, Robj, and Con.
+Here's a simple run through of creating a cache using a record key type and a variant value type. All that's needed to run this is utop, a running riak server, and a valid installation of riakc_ppx (with pa_test pinned as shown above!):
+
+`utop # #require "riakc_ppx";;`
+<hr>
+`utop # module RecordKey = struct type t = {name:string [@key 1];id:int [@key 2]} [@@deriving protobuf] end;;`<BR><BR>
+*`module RecordKey : sig`                                                                                         
+ `type t = { name : bytes; id : int; }`<BR> 
+`val from_protobuf : Protobuf.Decoder.t -> t` <BR> 
+`val to_protobuf : t -> Protobuf.Encoder.t -> unit`<BR> 
+`end`*<BR>  
+<hr>
+`utop # module VariantValue = struct type t = RED [@key 1] | GREEN [@key 2] [@@deriving protobuf] end;;`<BR><BR>
+*`module VariantValue :`                                                                                                                                 
+  `sig`                                                                                                                        
+   `type t = RED | GREEN`                                                                                                                             
+    `val from_protobuf : Protobuf.Decoder.t -> t`<BR>
+    `val from_protobuf_bare : Protobuf.Decoder.t -> t`<BR>
+    `val to_protobuf : t -> Protobuf.Encoder.t -> unit`<BR>
+    `val to_protobuf_bare : t -> Protobuf.Encoder.t -> unit`<BR>
+  `end`*<BR>
+<hr>
+`utop # module C = Cache.Make(RecordKey)(VariantValue);;`<BR><BR>
+*`module C : sig ... end`*
+<hr>
+`utop # C.with_cache ~host:"localhost" ~port:8087 ~bucket:"demo-bucket1" (fun c -> C.put c ~k:{RecordKey.name="key 1";id=123} (C.Robj.of_value (VariantValue.GREEN)));;`<BR><br>
+*`- : ('a C.Robj.t * RecordKey.t option, [> Opts.Put.error ]) Cache.Result.t =                                         
+                                Core.Std.Result.Ok ({C.Robj.contents = []; vclock = None; unchanged = false}, None)`*<BR>
+<hr>
+`utop # C.with_cache ~host:"localhost" ~port:8087 ~bucket:"demo-bucket1" (fun c -> C.get c {RecordKey.name="key 1";id=123});;`<BR><BR>
+*`- : ('a C.Robj.t, [> Opts.Get.error ]) Cache.Result.t = Core.Std.Result.Ok {C.Robj.contents =
+   [{C.Robj.Content.value = VariantValue.GREEN; ... }]}`*
+<hr>
