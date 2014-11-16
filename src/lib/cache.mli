@@ -157,15 +157,7 @@ module type S =
       val list_keys_stream :
         t ->
         (Key.t list -> unit Deferred.t) ->
-        (unit,
-         [> `Bad_conn
-          | `Bad_payload
-          | `Incomplete_payload
-          | `Overflow
-          | `Protobuf_encoder_error
-          | `Unknown_type
-          | `Wrong_type ])
-        Async.Std.Deferred.Result.t
+        (unit, [> Conn.error | Response.error]) Deferred.Result.t
       val with_cache :
         host:string ->
         port:int ->
@@ -175,13 +167,7 @@ module type S =
       val list_keys :
         t ->
         (Key.t list,
-         [> `Bad_conn
-          | `Bad_payload
-          | `Incomplete_payload
-          | `Overflow
-          | `Protobuf_encoder_error
-          | `Unknown_type
-          | `Wrong_type ])
+         [> Conn.error | Response.error ])
         Result.t Async_kernel.Deferred.t
       val get :
         t ->
@@ -207,17 +193,7 @@ module type S =
         Opts.Index_search.Query.t ->
         (Response.Index_search.t, [> Opts.Index_search.error ]) Result.t
         Deferred.t
-      val bucket_props :
-        t ->
-        (Response.Props.t,
-         [> `Bad_conn
-          | `Bad_payload
-          | `Incomplete_payload
-          | `Overflow
-          | `Protobuf_encoder_error
-          | `Unknown_type
-          | `Wrong_type ])
-        Deferred.Result.t
+   val bucket_props : t -> (Response.Props.t, [> Conn.error | Response.error ]) Deferred.Result.t
 end
 
 module Make_with_usermeta_index :
