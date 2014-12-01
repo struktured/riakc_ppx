@@ -1,7 +1,7 @@
 # About
 
 riakc_ppx is a type safe cache extension to [ocaml-riakc](https://github.com/orbitz/ocaml-riakc). Keys, values,
-indices, and user meta data are all strongly typed for a particular riak bucket instance.
+indices, and user meta data are all strongly typed for a particular riak bucket instance. It is currently a fork of ocaml-riakc, but could become dependent on it instead in the future.
 
 # Requirements
 
