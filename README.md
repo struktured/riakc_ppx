@@ -23,7 +23,11 @@ If you want to run this package in utop, do the following first:
 > **opam pin add -k git riakc\_ppx git@github.com:/struktured/pa\_test.git**
 > 
 
-To install riakc-ppx itself you can pin this repository:
+To install riakc-ppx itself simply run
+> **opam install riakc_ppx**
+>
+
+or you can pin this repository:
 
 > **opam pin add -k git riakc_ppx git@github.com:/struktured/riakc\_ppx.git**
 
