@@ -78,3 +78,16 @@ Here's a simple run through of creating a cache using a record key type and a va
 *`- : ('a C.Robj.t, [> Opts.Get.error ]) Cache.Result.t = Core.Std.Result.Ok {C.Robj.contents =
    [{C.Robj.Content.value = VariantValue.GREEN; ... }]}`*
 <hr>
+
+
+# Contributing / Future work
+
+## Future work
+
+- Map reduce api
+- Better test suite
+
+## Contributing
+
+- Open an issue on github 
+- Contact struktured on \#ocaml freenode irc.
