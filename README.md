@@ -50,8 +50,8 @@ There are examples of using each API command in the example directory.  There is
 
 Here's a simple run through of creating a cache using a record key type and a variant value type. All that's needed to run this is utop, a running riak server, and a valid installation of riakc_ppx (with pa_test pinned as shown above!):
 
-```
-utop # #require "riakc_ppx";;`
+```ocaml
+utop # #require "riakc_ppx";;
 utop # module RecordKey = struct type t = {name:string [@key 1];id:int [@key 2]} [@@deriving protobuf] end;;
 module RecordKey : sig
 type t = { name : bytes; id : int; }
