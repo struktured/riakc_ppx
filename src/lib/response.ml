@@ -10,7 +10,7 @@ let error payload =
 let parse_length s = 
   let to_int = Core.Std.Int32.to_int in
   let open Result.Monad_infix in
-  let len = Bitstring.extract_fastpath_int32_be_unsigned s 0 (Int32.of_int 32) in
+  let len = Bitstring.extract_fastpath_int32_be_unsigned s 0 in
   match to_int len with
 	| Some n ->
 	  Ok n
