@@ -76,6 +76,19 @@ utop # C.with_cache ~host:"localhost" ~port:8087 ~bucket:"demo-bucket1" (fun c -
 - : ('a C.Robj.t, [> Opts.Get.error ]) Cache.Result.t = Core.Std.Result.Ok {C.Robj.contents =
     [{C.Robj.Content.value = VariantValue.GREEN; ... }]}
 ```
+# Change Log
+
+## 3.0.0 ##
+ * Initial public release, forked from [riakc](https://github.com/orbitz/riakc) version 3.0.0
+
+## 3.1.1 ##
+ * Fixes compiler error with bitstring >= 2.0.4
+ * Better opam dependency constraints
+
+## 3.1.2 ##
+ * **BREAKING_CHANGE**: Internal protocol versioning (fixes issue #2)
+ * Fix to protobuf capable Bool module
+ * Added protobuf capable Float module
 
 # Contributing / Future work
 
