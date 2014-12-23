@@ -36,7 +36,7 @@ opam pin add riakc_ppx --dev-repo
 ## Building locally
 
 The following will clone the repository, build locally, and then pin to opam:
-
+B
 ```
 git clone git@github.com:/struktured/riakc_ppx.git
 cd riakc_ppx
@@ -86,7 +86,7 @@ utop # C.with_cache ~host:"localhost" ~port:8087 ~bucket:"demo-bucket1" (fun c -
  * Better opam dependency constraints
 
 ## 3.1.2 ##
- * **BREAKING_CHANGE**: Internal protocol versioning (fixes issue #2)
+ * **DATA FORMAT CHANGE**: Internal protocol versioning (fixes issue #2)
  * Fix to protobuf capable Bool module
  * Added protobuf capable Float module
 
