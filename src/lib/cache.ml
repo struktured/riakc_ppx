@@ -4,15 +4,38 @@ module Result = Core.Std.Result
 module Option = Core.Std.Option
 module Deferred = Async.Std.Deferred
 
+
+(* The internal protocol version *)
+let proto_version = 0
+
 let encode_decode (b:string) =
     let e = Protobuf.Encoder.create () in
     Protobuf.Encoder.bytes (Bytes.of_string b) e; Protobuf.Encoder.to_string e
 
-let serialize_proto to_protobuf v = 
- let e = Protobuf.Encoder.create () in to_protobuf v e; Protobuf.Encoder.to_string e
+type versioned = {version: int [@key 1]; data:string [@key 2]} [@@deriving protobuf]
 
-let deserialize_proto from_protobuf (b:string) = 
-  let d = Protobuf.Decoder.of_string b in from_protobuf d
+let serialize_version version to_protobuf v =
+  let e = Protobuf.Encoder.create () in
+  match version with
+  | 0 -> to_protobuf v e; Protobuf.Encoder.to_string e
+  | n -> failwith("Unknown serializer protocol version: " ^ (string_of_int n))
+
+let serialize_proto to_protobuf v  : string = 
+ let e = Protobuf.Encoder.create () in 
+ let versioned = {version=proto_version; 
+  data=serialize_version proto_version to_protobuf v} in
+ versioned_to_protobuf versioned e;Protobuf.Encoder.to_string e
+
+let deserialize_version version from_protobuf b =
+  match version with 
+  | 0 -> let d = Protobuf.Decoder.of_string b in from_protobuf d
+  | n -> failwith("Unknown deserializer protocol version: " ^ (string_of_int n))
+
+let deserialize_proto (from_protobuf:Protobuf.Decoder.t -> 'a) (b:string) : 'a = 
+  let d = Protobuf.Decoder.of_string b in 
+  let versioned = versioned_from_protobuf d in
+  deserialize_version versioned.version from_protobuf versioned.data
+    
 
 module Bytes = Protobuf_capables.Bytes
 module String = Protobuf_capables.String
@@ -22,7 +45,7 @@ module Int = Protobuf_capables.Int
 module Default_usermeta = String
 
 module Default_index = struct 
-  type t =    String [@key 1] of string [@key 2]
+  type t =   | String [@key 1] of string [@key 2]
              | Integer [@key 3] of int [@key 4]
              | Bad_int [@key 5] of string [@key 6]
              | Unknown [@key 7] of string [@key 8] [@@deriving protobuf, show]
@@ -282,8 +305,7 @@ struct
     let key = Option.map (key t) serialize_key in
     let bucket = bucket t in
     let tag = tag t in
-    let module L = Unsafe_Robj.Link in 
-    { L.bucket; L.key; L.tag}
+    {Unsafe_Robj.Link.bucket; key; tag}
 
   let from_unsafe (t:Unsafe_Robj.Link.t) : t =
     let key = Option.map (Unsafe_Robj.Link.key t) deserialize_key in

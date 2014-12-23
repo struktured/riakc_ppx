@@ -1,4 +1,4 @@
-PKG async ppx_deriving ppx_deriving_protobuf ppx_deriving_protobuf.runtime bitstring
+PKG async ppx_deriving ppx_deriving_protobuf ppx_deriving.show ppx_deriving_protobuf.runtime bitstring
 S src/lib
 S src/examples
 S src/tests
