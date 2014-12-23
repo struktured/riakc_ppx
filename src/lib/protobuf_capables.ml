@@ -16,8 +16,9 @@ end
 
 module Bool = struct
   include Core.Std.Bool
-  let to_protobuf t e = Protobuf.Encoder.bits32 (if t then Int32.one else Int32.zero) e
-  let from_protobuf d = (Protobuf.Decoder.bits32 d) == Int32.one
+  type bool_t = private bool [@@deriving protobuf]
+  let to_protobuf = bool_t_to_protobuf
+  let from_protobuf = bool_t_from_protobuf
   let show b = to_string b
 end
 
@@ -28,3 +29,12 @@ module Int = struct
   let show b = to_string b
 end
 
+
+
+module Float = struct
+  include Core.Std.Float
+  type float_t = private float [@@deriving protobuf]
+  let to_protobuf = float_t_to_protobuf
+  let from_protobuf = float_t_from_protobuf
+  let show t = to_string t
+end
