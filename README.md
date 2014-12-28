@@ -36,7 +36,7 @@ opam pin add riakc_ppx --dev-repo
 ## Building locally
 
 The following will clone the repository, build locally, and then pin to opam:
-B
+
 ```
 git clone git@github.com:/struktured/riakc_ppx.git
 cd riakc_ppx
