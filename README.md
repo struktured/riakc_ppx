@@ -17,13 +17,7 @@ All of the above packages can be installed via opam.
 
 ## Using opam
 
-If you want to run this package in utop, do the following first:
-
-```
-opam pin add -k git riakc_ppx git@github.com:/struktured/pa_test.git
-``` 
-
-To install riakc_ppx itself simply run
+To install riakc_ppx simply run
 ```
 opam install riakc_ppx
 ```
@@ -48,7 +42,7 @@ opam pin add riakc_ppx .
 
 There are examples of using each API command in the example directory.  There is also a minor test suite in the tests directory. The primary API entry points are Cache, Robj, and Conn.
 
-Here's a simple run through of creating a cache using a record key type and a variant value type. All that's needed to run this is utop, a running riak server, and a valid installation of riakc_ppx (with pa_test pinned as shown above!):
+Here's a simple run through of creating a cache using a record key type and a variant value type. All that's needed to run this is utop, a running riak server, and a valid installation of riakc_ppx:
 
 ```ocaml
 utop # #require "riakc_ppx";;
