@@ -216,6 +216,21 @@ let delete t ?(opts = []) ~b k =
     | Error err ->
       Error err
 
+(*Add support for purging a bucket--not nativly supported by RIAK. 
+Might have to sleep test thread b4 list keys or key list might be stale*)
+let purge t ?(opts=[]) ~b ~keys =
+  let rec thepurge keys =
+    match keys with  
+    | key :: tail -> delete t ~b key >>=
+		       (function
+			 | Ok ()-> thepurge tail
+			 | Ok _ -> Deferred.return(Error `Wrong_type)
+			 | Error err -> Deferred.return(Error err))
+    | [] -> Deferred.return(Ok()) in
+  (*let _ = L.generalLog log ("\n purge of bucket:" ^ b ^ " holding " 
+^ (string_of_int (List.length keys)) ^ " keys.") in*)
+  thepurge keys;;
+	    
 let index_search t ?(opts = []) ~b ~index query_type =
   let idx_s =
     Opts.Index_search.index_search_of_opts
