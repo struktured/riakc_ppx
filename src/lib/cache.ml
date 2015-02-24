@@ -531,11 +531,15 @@ let index_search t ?(opts = []) ~(index:Index_value.t) query_type =
 
 let bucket_props t = Conn.bucket_props (get_conn t) (get_bucket t)
 end
+
 module Make_with_usermeta(Key:Protobuf_capable.S) (Value:Protobuf_capable.S) (Usermeta_value:Protobuf_capable.S) =
     Make_with_usermeta_index(Key) (Value) (Usermeta_value) (Default_index)
 
 module Make_with_index(Key:Protobuf_capable.S)(Value:Protobuf_capable.S)(Index_value:Protobuf_capable.S) =
     Make_with_usermeta_index(Key) (Value) (Default_usermeta) (Index_value)
+
+module Make_with_value(Value:Protobuf_capable.S) =
+    Make_with_usermeta_index(String) (Value) (Default_usermeta) (Default_index)
 
 module Make(Key:Protobuf_capable.S) (Value:Protobuf_capable.S) =
     Make_with_usermeta_index(Key) (Value) (Default_usermeta) (Default_index)

@@ -198,10 +198,10 @@ end
 
 module Make_with_usermeta_index :
   functor
-    (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Usermeta_value : Protobuf_capable.S) (Index_value : Protobuf_capable.S) -> S 
-    with 
-      type Key.t = Key.t and 
-      type Value.t = Value.t and 
+    (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Usermeta_value : Protobuf_capable.S) (Index_value : Protobuf_capable.S) -> S
+    with
+      type Key.t = Key.t and
+      type Value.t = Value.t and
       type Usermeta_value.t = Usermeta_value.t and
       type Index_value.t = Index_value.t
 
@@ -211,11 +211,14 @@ module Make_with_usermeta :
       module type of Make_with_usermeta_index(Key)(Value)(Usermeta_value)(Default_index)
 
 module Make_with_index :
-functor
+  functor
   (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Index_value : Protobuf_capable.S) ->
     module type of Make_with_usermeta_index(Key)(Value)(Default_usermeta)(Index_value)
 
+module Make_with_value :
+  functor (Value : Protobuf_capable.S) ->
+    module type of Make_with_usermeta(String)(Value)(Default_usermeta)
 
 module Make :
-  functor (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) 
-  -> module type of Make_with_usermeta(Key)(Value)(Default_usermeta)
+  functor (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) ->
+    module type of Make_with_usermeta(Key)(Value)(Default_usermeta)
