@@ -58,7 +58,6 @@ val delete :
 
 val purge :
   t ->
-  ?opts:Opts.Delete.t list ->
   b:string ->
   (*  keys:string Core.Std.List.t ->*)
   (unit, [>Opts.Delete.error]) Deferred.Result.t

@@ -218,7 +218,7 @@ let delete t ?(opts = []) ~b k =
 
 (*Add support for purging a bucket--not nativly supported by RIAK. 
 Might have to sleep test thread b4 list keys or key list might be stale*)
-let purge t ?(opts=[]) ~b =
+let purge t ~b =
   let rec thepurge keys =
     match keys with  
     | key :: tail -> delete t ~b key >>=

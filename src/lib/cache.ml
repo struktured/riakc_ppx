@@ -234,6 +234,7 @@ module type S =
       ?opts:Opts.Delete.t list ->
       Key.t ->
       (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
+				     
     val index_search :
       t ->
       ?opts:Opts.Index_search.t list ->
@@ -438,6 +439,11 @@ module type S2 =
       ?opts:Opts.Delete.t list ->
       Key.t ->
       (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
+
+    val purge :
+      t ->
+      (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
+				     
     val index_search :
       t ->
       ?opts:Opts.Index_search.t list ->
@@ -996,7 +1002,12 @@ module Make_with_usermeta_index_primitive_key
 	 Result.Ok ()
       | Result.Error err ->
 	 Result.Error err
-		      
+
+  (*val purge :
+    t ->
+    (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t*)
+  let purge cache = Conn.purge cache.conn cache.bucket
+	    
   let index_search t ?(opts = []) ~(index:Index_value.t) query_type =
     Conn.index_search
       t.conn
