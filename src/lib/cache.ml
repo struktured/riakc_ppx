@@ -443,6 +443,11 @@ module type S2 =
     val purge :
       t ->
       (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
+
+    val purge2 :
+      conn ->
+      string ->
+      (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
 				     
     val index_search :
       t ->
@@ -1007,6 +1012,14 @@ module Make_with_usermeta_index_primitive_key
     t ->
     (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t*)
   let purge cache = Conn.purge cache.conn cache.bucket
+		    >>| function
+		      | Result.Ok () -> Result.Ok ()
+		      | Result.Error err -> Result.Error err
+
+  let purge2 conn bucket = Conn.purge conn bucket
+			   >>| function
+			     | Result.Ok () -> Result.Ok ()
+			     | Result.Error err -> Result.Error err
 	    
   let index_search t ?(opts = []) ~(index:Index_value.t) query_type =
     Conn.index_search

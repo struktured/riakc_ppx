@@ -369,6 +369,11 @@ module type S2 =
       t ->
       (unit, [> Opts.Delete.error]) Result.t Deferred.t
 
+    val purge2 :
+      conn ->
+      string ->
+      (unit, [> Opts.Delete.error]) Result.t Deferred.t
+
     val index_search :
       t ->
       ?opts:Opts.Index_search.t list ->
