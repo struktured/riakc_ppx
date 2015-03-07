@@ -168,7 +168,7 @@ let list_keys t bucket =
     (Request.list_keys bucket)
     Response.list_keys
   >>| function
-    | Ok keys ->
+    | Ok keys -> 
       Ok (List.concat keys)
     | Error err ->
       Error err
@@ -181,14 +181,14 @@ let get t ?(opts = []) ~b k =
   >>| function
     | Ok [robj] -> begin
       if Robj.contents robj = [] && Robj.vclock robj = None then
-	printf "\nget::Not found"; Error `Notfound
+	(printf "\nget::Not found"; Error `Notfound)
       else
 	Ok robj
     end
-    | Ok _ ->  printf "\ngett::Ok_ error";
-      Error `Wrong_type
-    | Error err ->  printf "\nput::Error error";
-      Error err
+    | Ok _ ->  (printf "\ngett::Ok_ error";
+      Error `Wrong_type)
+    | Error err ->  (printf "\nput::Error error";
+      Error err)
 
 let put t ?(opts = []) ~b ?k robj =
   do_request
@@ -198,10 +198,10 @@ let put t ?(opts = []) ~b ?k robj =
   >>| function
     | Ok [(robj, key)] ->
       Ok (robj, key)
-    | Ok _ -> printf "\nput::Ok_ error";
-      Error `Wrong_type
-    | Error err ->  printf "\nput::Error err";
-      Error err
+    | Ok _ -> (printf "\nput::Ok_ error";
+      Error `Wrong_type)
+    | Error err ->  (printf "\nput::Error err";
+      Error err)
 
 let delete t ?(opts = []) ~b k =
   do_request
