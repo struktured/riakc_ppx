@@ -181,13 +181,13 @@ let get t ?(opts = []) ~b k =
   >>| function
     | Ok [robj] -> begin
       if Robj.contents robj = [] && Robj.vclock robj = None then
-	Error `Notfound
+	printf "\nget::Not found"; Error `Notfound
       else
 	Ok robj
     end
-    | Ok _ ->
+    | Ok _ ->  printf "\ngett::Ok_ error";
       Error `Wrong_type
-    | Error err ->
+    | Error err ->  printf "\nput::Error error";
       Error err
 
 let put t ?(opts = []) ~b ?k robj =
@@ -198,9 +198,9 @@ let put t ?(opts = []) ~b ?k robj =
   >>| function
     | Ok [(robj, key)] ->
       Ok (robj, key)
-    | Ok _ ->
+    | Ok _ -> printf "\nput::Ok_ error";
       Error `Wrong_type
-    | Error err ->
+    | Error err ->  printf "\nput::Error err";
       Error err
 
 let delete t ?(opts = []) ~b k =
