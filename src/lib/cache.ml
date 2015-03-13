@@ -44,11 +44,11 @@ module Int = Protobuf_capables.Int
 
 module Default_usermeta = String
 
-module Default_index = struct 
-  type t =   | String [@key 1] of string [@key 2]
-             | Integer [@key 3] of int [@key 4]
-             | Bad_int [@key 5] of string [@key 6]
-             | Unknown [@key 7] of string [@key 8] [@@deriving protobuf, show]
+module Default_index = struct
+  type t =   | String of (string [@key 2]) [@key 1]
+             | Integer of (int [@key 4]) [@key 3]
+             | Bad_int of (string [@key 6]) [@key 5]
+             | Unknown of (string [@key 8]) [@key 7] [@@deriving protobuf, show]
 end
 
 module type S =
