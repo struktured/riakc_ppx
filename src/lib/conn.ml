@@ -183,14 +183,14 @@ let get t ?(opts = []) ~b k =
     | Ok [robj] -> begin
       if Robj.contents robj = [] && Robj.vclock robj = None then
 	(printf "\nget::Not found";
-	 let _ = L.generalLog log ("\n put() bucket:" ^ b) in
+	 let _ = L.generalLog log ("\n get() bucket:" ^ b) in
 	 Error `Notfound)
       else
 	Ok robj
     end
-    | Ok _ ->  (printf "\ngett::Ok_ error";
+    | Ok _ ->  (printf "\nget::Ok_ error";
       Error `Wrong_type)
-    | Error err ->  (printf "\nput::Error error";
+    | Error err ->  (printf "\nget::Error error";
       Error err)
 
 let put t ?(opts = []) ~b ?k robj =
@@ -227,12 +227,10 @@ let purge t ~b =
     | key :: tail -> delete t ~b key >>=
 		       (function
 			 | Ok ()-> thepurge tail
-			 | Ok _ -> Deferred.return(Error `Wrong_type)
 			 | Error err -> Deferred.return(Error err))
     | [] -> Deferred.return(Ok()) in
   list_keys t b >>= (fun lok -> match lok with
 				| Ok keys -> thepurge keys
-				| Ok _ -> Deferred.return(Error `Wrong_type)
 				| Error err -> Deferred.return(Error err))
 	    
 let index_search t ?(opts = []) ~b ~index query_type =

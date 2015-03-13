@@ -67,7 +67,9 @@ let put p () =
   let module Content = Robj.Content in
   let open Put in
   let e = E.create () in
-  Put.put_to_protobuf p e;
+  let _ = Put.put_to_protobuf p e in
+  let _ = Core.Std.printf "\n put g () request AS HEX: %s" (hex_of_string (E.to_string e)) in
+  let _ = L.generalLog log ("\n put g () request AS HEX:%s" ^ (hex_of_string (E.to_string e))) in
   Result.Ok (wrap_request '\x0B' (E.to_string e))
 
 let delete d () =

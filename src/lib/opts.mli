@@ -22,7 +22,8 @@ sig
     | Basic_quorum 
     | Notfound_ok 
     | Head
-    | Deletedvclock 
+    | Deletedvclock
+    | BucketType of string
 
   type get = { bucket        : string 
              ; key           : string 
@@ -32,7 +33,8 @@ sig
              ; notfound_ok : bool option
              ; if_modified   : string option 
              ; head : bool option 
-             ; deletedvclock : bool option 
+             ; deletedvclock : bool option
+	     ; bucket_type   : string option
   } 
 
   val get_from_protobuf : Protobuf.Decoder.t -> get
@@ -57,7 +59,7 @@ sig
     | If_not_modified 
     | If_none_match 
     | Return_head 
-
+    | Bucket_type of string
   type put = { bucket          : string
              ; key             : string option
              ; vclock          : string option
@@ -68,7 +70,8 @@ sig
              ; pw              : int option
              ; if_not_modified : bool option 
              ; if_none_match   : bool option 
-             ; return_head     : bool option 
+             ; return_head     : bool option
+	     ; bucket_type     : string option
   } 
 
   val put_from_protobuf : Protobuf.Decoder.t -> put
@@ -89,7 +92,7 @@ sig
     | Pr      of Quorum.t
     | Pw      of Quorum.t
     | Dw      of Quorum.t 
-
+    | BucketType of string
   type delete = { bucket : string 
                 ; key    : string 
                 ; rw     : int option 
@@ -98,7 +101,8 @@ sig
                 ; w      : int option 
                 ; pr     : int option 
                 ; pw     : int option 
-                ; dw     : int option 
+                ; dw     : int option
+		; bucket_type : string option
   } 
 
   val delete_from_protobuf : Protobuf.Decoder.t -> delete
