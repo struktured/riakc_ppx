@@ -116,7 +116,7 @@ module Index_search : sig
 
   module Query : sig
     type 'a range = { min          : 'a 
-                    ; max          : 'a 
+                    ; max          : 'a
                     ; return_terms : bool 
     }
 

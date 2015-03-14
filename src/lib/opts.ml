@@ -75,7 +75,7 @@ module Get = struct
              ; if_modified   : string option [@key 7]
              ; head          : bool option [@key 8]
              ; deletedvclock : bool option [@key 9]
-	     ; bucket_type   : string option [@key 16] [@default "default"]
+	     ; bucket_type   : string option [@key 13] [@default "default"]
   } [@@deriving protobuf] 
   
   let get_of_opts (opts:t list) ~b ~k =
@@ -216,7 +216,7 @@ module Delete = struct
                 ; pr     : int option [@key 7]
                 ; pw     : int option [@key 8]
                 ; dw     : int option [@key 9]
-		; bucket_type : string option [@key 16]
+		; bucket_type : string option [@key 13]
   } [@@deriving protobuf]
 
   let delete_of_opts opts ~b ~k =
