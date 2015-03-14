@@ -56,8 +56,8 @@ sig
     | Dw      of Quorum.t 
     | Pw      of Quorum.t 
     | Return_body 
-    | If_not_modified 
-    | If_none_match 
+    (*| If_not_modified 
+    | If_none_match *)
     | Return_head 
     | Bucket_type of string
   type put = { bucket          : string
@@ -68,8 +68,8 @@ sig
              ; dw              : int option
              ; return_body     : bool option 
              ; pw              : int option
-             ; if_not_modified : bool option 
-             ; if_none_match   : bool option 
+             (*; if_not_modified : bool option 
+             ; if_none_match   : bool option *)
              ; return_head     : bool option
 	     ; bucket_type     : string option
   } 

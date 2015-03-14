@@ -75,7 +75,7 @@ module Get = struct
              ; if_modified   : string option [@key 7]
              ; head          : bool option [@key 8]
              ; deletedvclock : bool option [@key 9]
-	     ; bucket_type   : string option [@key 16]
+	     ; bucket_type   : string option [@key 16] [@default "default"]
   } [@@deriving protobuf] 
   
   let get_of_opts (opts:t list) ~b ~k =
@@ -124,8 +124,8 @@ module Put = struct
     | Dw     of Quorum.t
     | Pw     of Quorum.t
     | Return_body 
-    | If_not_modified 
-    | If_none_match  
+    (*| If_not_modified 
+    | If_none_match  *)
     | Return_head 
     | Bucket_type of string
   module Content = Robj.Content
@@ -150,8 +150,8 @@ optional bool asis = 13
              ; dw              : int option [@key 6] [@default false]
              ; return_body     : bool option [@key 7] [@default false]
              ; pw              : int option [@key 8] [@default false]
-             ; if_not_modified : bool option [@key 9] [@default false]
-             ; if_none_match   : bool option [@key 10] [@default false]
+             (*; if_not_modified : bool option [@key 9] [@default false]
+             ; if_none_match   : bool option [@key 10] [@default false]*)
              ; return_head     : bool option [@key 11] [@default false]
 	     ; bucket_type     : string option [@key 16] [@default "default"]
   } [@@deriving protobuf]
@@ -165,8 +165,8 @@ optional bool asis = 13
 	    ; dw              = None
 	    ; pw              = None
 	    ; return_body     = None
-	    ; if_not_modified = None
-	    ; if_none_match   = None
+	    (*; if_not_modified = None
+	    ; if_none_match   = None*)
 	    ; return_head     = None
 	    ; bucket_type     = None
 	    }
@@ -183,10 +183,10 @@ optional bool asis = 13
 	  { p with pw = Some (Quorum.to_int32 n) }
 	| Return_body ->
 	  { p with return_body = Some true }
-	| If_not_modified ->
+	(*| If_not_modified ->
 	  { p with if_not_modified = Some true }
 	| If_none_match ->
-	  { p with if_none_match = Some true }
+	  { p with if_none_match = Some true }*)
 	| Return_head ->
 	   { p with return_head = Some true }
 	| Bucket_type buckettype ->
