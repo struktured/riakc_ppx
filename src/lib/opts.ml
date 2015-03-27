@@ -75,6 +75,7 @@ module Get = struct
              ; if_modified   : string option [@key 7]
              ; head          : bool option [@key 8]
              ; deletedvclock : bool option [@key 9]
+	     (*keys 10, 11, 12 are for uint32 timeout, bool sloppyquorum, uint32 n_val*)
 	     ; bucket_type   : string option [@key 13] [@default "default"]
   } [@@deriving protobuf] 
   

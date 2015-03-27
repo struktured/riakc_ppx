@@ -43,12 +43,25 @@ module Bool = Protobuf_capables.Bool
 module Int = Protobuf_capables.Int
 (*module StringPrimitive = Protobuf_capables.StringPrimitive*)
 module Default_usermeta = String
-    
+
 module Default_index = struct 
   type t =   | String [@key 1] of string [@key 2]
          | Integer [@key 3] of int [@key 4]
          | Bad_int [@key 5] of string [@key 6]
          | Unknown [@key 7] of string [@key 8] [@@deriving protobuf, show]
+
+(*====================================
+For some reason I cannot get the below new syntax to compile and
+my opam says ppx_deriving and ppx_deriving_protobuf is up to date. Not
+had a chance to diagnose.
+======================================*)
+(*
+module Default_index = struct
+  type t =   | String of (string [@key 2]) [@key 1]
+             | Integer of (int [@key 4]) [@key 3]
+             | Bad_int of (string [@key 6]) [@key 5]
+             | Unknown of (string [@key 8]) [@key 7] [@@deriving protobuf, show]
+			  *) 
 end
 			 
 module type S =
@@ -1041,13 +1054,15 @@ end
 					      
 
 
-					      
 module Make_with_usermeta(Key:Protobuf_capable.S) (Value:Protobuf_capable.S) (Usermeta_value:Protobuf_capable.S) =
   Make_with_usermeta_index(Key) (Value) (Usermeta_value) (Default_index)
 			  
 module Make_with_index(Key:Protobuf_capable.S)(Value:Protobuf_capable.S)(Index_value:Protobuf_capable.S) =
   Make_with_usermeta_index(Key) (Value) (Default_usermeta) (Index_value)
-			  
+
+module Make_with_value(Value:Protobuf_capable.S) =
+  Make_with_usermeta_index(String) (Value) (Default_usermeta) (Default_index)
+
 module Make(Key:Protobuf_capable.S) (Value:Protobuf_capable.S) =
   Make_with_usermeta_index(Key) (Value) (Default_usermeta) (Default_index)
 			  (*use final 3 and make key string*)

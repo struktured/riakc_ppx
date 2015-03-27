@@ -408,8 +408,9 @@ functor
 module type of Make_with_usermeta_index(Key)(Value)(Usermeta_value)(Default_index)
 				       
 module Make_with_index :
-functor
+  functor
   (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Index_value : Protobuf_capable.S) ->
+
 module type of Make_with_usermeta_index(Key)(Value)(Default_usermeta)(Index_value)
 (*
 module Make_with_usermeta_index_primitive_keys :
@@ -419,8 +420,12 @@ module type of
 module Make :
 functor (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) 
 	-> module type of Make_with_usermeta(Key)(Value)(Default_usermeta)
-					    
+
 module Make_with_primitive_keys :
 functor (Value : Protobuf_capable.S)
 	-> module type of Make_with_usermeta_index_primitive_key(Value)(Default_usermeta)(Default_index)
-								
+
+module Make_with_value :
+  functor (Value : Protobuf_capable.S) ->
+    module type of Make_with_usermeta(String)(Value)(Default_usermeta)
+
