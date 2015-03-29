@@ -67,7 +67,7 @@ end = struct
 		let s = String.concat "" [resolved.a;h.a] in
 		let updated = { resolved with a = s } in
 		let updated2 = { updated with b = (updated.b + h.b) } in
-	        let finalupdate = { updated2 with c = Red } in
+	        let finalupdate = { updated2 with c = (resolveColor (updated2.c,resolved.c)) } in
 		helper t finalupdate in
     helper bunchofts init;;
 end 
@@ -225,7 +225,10 @@ let get_resolve_put_test c =
 						   let r = recordt_of_pb pb in
 						   assert_cond
 						     "\nValue is wrong. Must have failed to resolve conflict or to put with vclock. Check db with curl."
-						     ((r.b = 21) && (r.c=Red))))
+						     ((r.b = 21) && (r.c=Red) &&
+							((Core.Std.String.substr_index_exn r.a "first") >= 0) && (Core.Std.String.substr_index_exn r.a "second") >= 0)
+						  )
+					       )
 	       
 (*==========BOTH OF THESE APPROACHES FAIL TO PUT TWICE TO SAME KEY AND GET A SIBLING
 Not sure why...is riak that slow? Why no apparent error?==============*)
