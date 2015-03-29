@@ -1,6 +1,6 @@
 open Core.Std
 open Async.Std
-
+module Unix = Core.Std.Unix
 module Rconn = Riakc.Conn
 (*module Robj  = Riakc.Robj*)
 
@@ -120,7 +120,7 @@ let get_and_resolve_conflicts c =
 				    let old_content_hd = R.content robj in
 				    let new_content = R.Content.set_value pb old_content_hd in
 				    let updated_robj = R.set_content new_content robj in
-exec_update updated_robj);;
+				    exec_update c updated_robj);;
 (*
 			 | Core.Std.Result.Error `Notfound           -> printf "Not found"; ()
 			 | Core.Std.Result.Error `Bad_conn           -> printf "Bad_conn"; ()
@@ -137,7 +137,7 @@ let resolve_test c =
   let open Opts.Put in
   let module Robj = StringCache.Robj in
   let open Conflicted in
-  let opts = [BucketType "siblings_allowed"] in 
+  let opts = [Bucket_type "siblings_allowed"] in 
   let r1 = { a="first"; b=1; c=Green } in
   let r2 = { a="second"; b=20; c=Red } in
   let r1aspb = string_of_pb_encoded_r r1 in
@@ -148,25 +148,25 @@ let resolve_test c =
   in
   let robj2 = Robj.create (Robj.Content.create r2aspb) in
   let key = "testkey" in
-  StringCache.put c opts ~k:key robj >>=
+  StringCache.put c ~opts ~k:key robj >>=
     fun _ -> (Core.Std.Unix.sleep 6; Deferred.return(Ok ())) >>=
-    fun _ -> StringCache.put c opts ~k:key robj2 >>=
+    fun _ -> StringCache.put c ~opts ~k:key robj2 >>=
     fun _ -> (Unix.sleep 6; Deferred.return(Ok ())) >>=
     fun _ -> get_and_resolve_conflicts c >>=
     fun _ -> exec_get c "testkey" >>=
-    fun robj -> (let rlist = R.contents robj in
-		 assert_cond "Failed to resolve conflict; siblings exist" (List.length rlist = 1)) >>=
-    fun result -> match result with
-		    Ok () -> (let cont = R.content robj in
-			      let pb = Robj.value cont in
-			      let r = recordt_of_pb pb in
-			      assert_cond
-				"Value is wrong. Must have failed to resolve conflict or to put with vclock. Check db with curl."
-				((r.b = 21) && (r.c=Red)))
-		  | Error _ -> Deferred.return (Ok())
-		  
+    fun robj -> (let rlist = Robj.contents robj in
+		 if (List.length rlist > 1) then 
+		   (assert_cond "Failed to resolve conflict; siblings exist" (List.length rlist = 1))
+		 else
+		   (let cont = Robj.content robj in
+		    let pb = Robj.Content.value cont in
+		    let r = recordt_of_pb pb in
+		    assert_cond
+		      "Value is wrong. Must have failed to resolve conflict or to put with vclock. Check db with curl."
+		      ((r.b = 21) && (r.c=Red))))
+
   
-let tests = [ ("todo"           , todo_test)]
+let tests = [ ("resolve_test"           , resolve_test)]
 	      
 let execute_test t =
   let with_cache () =
