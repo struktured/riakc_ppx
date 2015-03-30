@@ -63,11 +63,11 @@ end = struct
     let rec helper alist resolved = 
       match alist with
       | [] -> resolved
-      | h::t -> let _ = printf "Considering next sibling with a:%s b:%d c:%s " resolved.a resolved.b (show_closedtype resolved.c) in
+      | h::t -> let _ = printf "\nConsidering next sibling with a:%s b:%d c:%s " h.a h.b (show_closedtype h.c) in
 		let s = String.concat "" [resolved.a;h.a] in
 		let updated = { resolved with a = s } in
 		let updated2 = { updated with b = (updated.b + h.b) } in
-	        let finalupdate = { updated2 with c = (resolveColor (updated2.c,resolved.c)) } in
+	        let finalupdate = { updated2 with c = (resolveColor (resolved.c,h.c)) } in
 		helper t finalupdate in
     helper bunchofts init;;
 end 
@@ -119,7 +119,7 @@ let get_and_resolve_conflicts c =
 		       | robj -> (let _ = printf "\nResolving conflicts amongst siblings..." in
 				  let rcrdtlist = rlist_from_content_list [] (R.contents robj) in
 				  let resolved = resolve_conflicts rcrdtlist in
-				  let _ = printf "Resolved with: field a:%s b:%d c:%s" resolved.a resolved.b (show_closedtype resolved.c) in				    
+				  let _ = printf "\nResolved with: field a:%s b:%d c:%s" resolved.a resolved.b (show_closedtype resolved.c) in				    
 				  let e = Protobuf.Encoder.create () in
 				  let _ = recordt_to_protobuf resolved e in
 				  let pb = Protobuf.Encoder.to_string e in
@@ -242,8 +242,8 @@ one makes first put, second one creates sibling with second put. Third and final
 sibling conflict then make a put. And WHILE we're troubleshooting we only needs to invoke the first 2 puts ONCE. We'll
 be focusing on fixing the 3rd step that is failing: the get, resolve, put cycle that is supposed to use a vclock to 
 resolve conflicts. Once you do the first 2 puts just keep working with those siblings.*)
-(*===========FIRST PUT======= let tests = [ ("resolve_test_firstput", resolve_test_firstput)] *)
-(*===========SECOND PUT creates sibling======= let tests = [ ("resolve_test_secondput", resolve_test_secondput)] *)
+(*===========FIRST PUT======= let tests = [ ("resolve_test_firstput", resolve_test_firstput)]*)
+(*===========SECOND PUT creates sibling======= let tests = [ ("resolve_test_secondput", resolve_test_secondput)]*)
 (*===========CONFLICT RESOLUTION: resolution of conflict is faiing=======*)
 let tests = [ ("get_resolve_put_test", get_resolve_put_test)]
 	      
