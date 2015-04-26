@@ -3,7 +3,9 @@
 module type Key = sig include Protobuf_capable.S end
 module type Value = sig include Protobuf_capable.S end
 module Result = Core.Std.Result
-
+module L = Mylogging.Log
+let hex_of_string = L.hex_of_string;;
+let log = "log.txt";
 module E = Protobuf.Encoder
 
 let wrap_request (mc:'a) (s:string) =
@@ -55,7 +57,8 @@ let get g () =
   let open Get in 
   let open Result.Monad_infix in
   let e = E.create () in 
-  Get.get_to_protobuf g e;
+  let _ = Get.get_to_protobuf g e in
+  let _ = L.generalLog log ("\n get g () request AS HEX:%s" ^ (hex_of_string (E.to_string e))) in
   Core.Std.Ok (wrap_request '\x09' (E.to_string e))
 
 let put p () =
@@ -63,7 +66,8 @@ let put p () =
   let module Content = Robj.Content in
   let open Put in
   let e = E.create () in
-  Put.put_to_protobuf p e;
+  let _ = Put.put_to_protobuf p e in
+  let _ = L.generalLog log ("\n put g () request AS HEX:%s" ^ (hex_of_string (E.to_string e))) in
   Result.Ok (wrap_request '\x0B' (E.to_string e))
 
 let delete d () =
