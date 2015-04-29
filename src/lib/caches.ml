@@ -7,7 +7,7 @@ module IntBoolCache = Cache.Make(Int)(Bool)
 module StringCache = Cache.Make(String)(String)
 module StringBoolCache = Cache.Make(String)(Bool)
 module StringIntCache = Cache.Make(String)(Int)
-module StringPrimitiveCache = Cache.Make_with_primitive_keys(String)
+module StringPrimitiveCache = Cache.Make_with_string_key(String)
 
 
 
