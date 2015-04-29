@@ -1,8 +1,6 @@
 open Core.Std
 open Async.Std
 module String = Core.Std.String
-module L = Mylogging.Log
-let log = "log.txt";
 
 type t = { r : Reader.t
 	 ; w : Writer.t
@@ -183,7 +181,6 @@ let get t ?(opts = []) ~b k =
     | Ok [robj] -> begin
       if Robj.contents robj = [] && Robj.vclock robj = None then
 	(printf "\nget::Not found";
-	 let _ = L.generalLog log ("\n get() bucket:" ^ b) in
 	 Error `Notfound)
       else
 	Ok robj
