@@ -2,7 +2,6 @@ open Core.Std
 open Async.Std
 module String = Core.Std.String
 
-
 type t = { r : Reader.t
 	 ; w : Writer.t
 	 }
@@ -168,7 +167,7 @@ let list_keys t bucket =
     (Request.list_keys bucket)
     Response.list_keys
   >>| function
-    | Ok keys ->
+    | Ok keys -> 
       Ok (List.concat keys)
     | Error err ->
       Error err
@@ -181,14 +180,15 @@ let get t ?(opts = []) ~b k =
   >>| function
     | Ok [robj] -> begin
       if Robj.contents robj = [] && Robj.vclock robj = None then
-	Error `Notfound
+	(printf "\nget::Not found";
+	 Error `Notfound)
       else
 	Ok robj
     end
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Ok _ ->  (printf "\nget::Ok_ error";
+      Error `Wrong_type)
+    | Error err ->  (printf "\nget::Error error";
+      Error err)
 
 let put t ?(opts = []) ~b ?k robj =
   do_request
@@ -198,10 +198,10 @@ let put t ?(opts = []) ~b ?k robj =
   >>| function
     | Ok [(robj, key)] ->
       Ok (robj, key)
-    | Ok _ ->
-      Error `Wrong_type
-    | Error err ->
-      Error err
+    | Ok _ -> (printf "\nput::Ok_ error";
+      Error `Wrong_type)
+    | Error err ->  (printf "\nput::Error err";
+      Error err)
 
 let delete t ?(opts = []) ~b k =
   do_request
@@ -215,6 +215,20 @@ let delete t ?(opts = []) ~b k =
       Error `Wrong_type
     | Error err ->
       Error err
+
+(*Add support for purging a bucket--not nativly supported by RIAK. 
+Might have to sleep test thread b4 list keys or key list might be stale*)
+let purge t ~b =
+  let rec thepurge keys =
+    match keys with  
+    | key :: tail -> delete t ~b key >>=
+      (function
+        | Ok ()-> thepurge tail
+                         | Error err -> Deferred.return(Error err))
+      | [] -> Deferred.return(Ok()) in
+  list_keys t b >>= (fun lok -> match lok with
+                                | Ok keys -> thepurge keys
+                                | Error err -> Deferred.return(Error err))
 
 let index_search t ?(opts = []) ~b ~index query_type =
   let idx_s =

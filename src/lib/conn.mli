@@ -56,6 +56,11 @@ val delete :
   string ->
   (unit, [> Opts.Delete.error ]) Deferred.Result.t
 
+val purge :
+  t ->
+  b:string ->
+  (unit, [>Opts.Delete.error]) Deferred.Result.t
+
 val index_search :
   t ->
   ?opts:Opts.Index_search.t list ->

@@ -64,6 +64,7 @@ module Get = struct
     | Notfound_ok 
     | Head
     | Deletedvclock
+    | BucketType of string
 
   type get = { bucket        : string [@key 1]
              ; key           : string [@key 2]
@@ -74,6 +75,8 @@ module Get = struct
              ; if_modified   : string option [@key 7]
              ; head          : bool option [@key 8]
              ; deletedvclock : bool option [@key 9]
+	     (*keys 10, 11, 12 are for uint32 timeout, bool sloppyquorum, uint32 n_val*)
+	     ; bucket_type   : string option [@key 13] [@default "default"]
   } [@@deriving protobuf] 
   
   let get_of_opts (opts:t list) ~b ~k =
@@ -86,6 +89,7 @@ module Get = struct
 	    ; if_modified   = None
 	    ; head          = None
 	    ; deletedvclock = None
+	    ; bucket_type   = None
 	    }
     in
     Core.Std.List.fold_left
@@ -105,7 +109,9 @@ module Get = struct
 	| Head ->
 	  { g with head = Some true }
 	| Deletedvclock ->
-	  { g with deletedvclock = Some true })
+	   { g with deletedvclock = Some true }
+	| BucketType buckettype ->
+	   { g with bucket_type = Some buckettype})
       ~init:g
       opts
 end
@@ -119,13 +125,24 @@ module Put = struct
     | Dw     of Quorum.t
     | Pw     of Quorum.t
     | Return_body 
-    | If_not_modified 
-    | If_none_match  
+    (*| If_not_modified 
+    | If_none_match  *)
     | Return_head 
-
+    | Bucket_type of string
   module Content = Robj.Content
   module Robj = Robj
+  (*note; int is being used below for uint32
+MISSING ELEMENTS: 12,14 - 16
+optional uint32 timeout = 12
+optional bool sloppy_quorum = 14
+optional uint32 n_val = 15
+optional bytes type = 16
 
+The if_not_modified, if_none_match and asis parameters are 
+set only for messages between nodes...clients should not set these.
+So why are some below?
+optional bool asis = 13
+   *)
   type put = { bucket          : string [@key 1]
              ; key             : string option [@key 2] [@default ""]
              ; vclock          : string option [@key 3] [@default ""]
@@ -134,9 +151,10 @@ module Put = struct
              ; dw              : int option [@key 6] [@default false]
              ; return_body     : bool option [@key 7] [@default false]
              ; pw              : int option [@key 8] [@default false]
-             ; if_not_modified : bool option [@key 9] [@default false]
-             ; if_none_match   : bool option [@key 10] [@default false]
+             (*; if_not_modified : bool option [@key 9] [@default false]
+             ; if_none_match   : bool option [@key 10] [@default false]*)
              ; return_head     : bool option [@key 11] [@default false]
+	     ; bucket_type     : string option [@key 16] [@default "default"]
   } [@@deriving protobuf]
 
   let put_of_opts opts ~b ~k (robj:'a Robj.t) =
@@ -148,9 +166,10 @@ module Put = struct
 	    ; dw              = None
 	    ; pw              = None
 	    ; return_body     = None
-	    ; if_not_modified = None
-	    ; if_none_match   = None
+	    (*; if_not_modified = None
+	    ; if_none_match   = None*)
 	    ; return_head     = None
+	    ; bucket_type     = None
 	    }
     in
     Core.Std.List.fold_left
@@ -165,12 +184,14 @@ module Put = struct
 	  { p with pw = Some (Quorum.to_int32 n) }
 	| Return_body ->
 	  { p with return_body = Some true }
-	| If_not_modified ->
+	(*| If_not_modified ->
 	  { p with if_not_modified = Some true }
 	| If_none_match ->
-	  { p with if_none_match = Some true }
+	  { p with if_none_match = Some true }*)
 	| Return_head ->
-	  { p with return_head = Some true }) 
+	   { p with return_head = Some true }
+	| Bucket_type buckettype ->
+	   { p with bucket_type = Some buckettype})
       ~init:p
       opts
 end
@@ -186,7 +207,7 @@ module Delete = struct
     | Pr      of Quorum.t
     | Pw      of Quorum.t
     | Dw      of Quorum.t 
-
+    | BucketType of string
   type delete = { bucket : string [@key 1]
                 ; key    : string [@key 2]
                 ; rw     : int option [@key 3]
@@ -196,6 +217,7 @@ module Delete = struct
                 ; pr     : int option [@key 7]
                 ; pw     : int option [@key 8]
                 ; dw     : int option [@key 9]
+		; bucket_type : string option [@key 13]
   } [@@deriving protobuf]
 
   let delete_of_opts opts ~b ~k =
@@ -208,6 +230,7 @@ module Delete = struct
 	    ; pr     = None
 	    ; pw     = None
 	    ; dw     = None
+	    ; bucket_type = None
 	    }
     in
     Core.Std.List.fold_left
@@ -225,7 +248,9 @@ module Delete = struct
 	| Pw n ->
 	  { d with pw = Some (Quorum.to_int32 n) }
 	| Dw n ->
-	  { d with dw = Some (Quorum.to_int32 n) }) 
+	   { d with dw = Some (Quorum.to_int32 n) }
+	| BucketType buckettype ->
+	   { d with bucket_type = Some buckettype }) 
       ~init:d
       opts
 end
