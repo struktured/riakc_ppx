@@ -7,15 +7,14 @@ module Rconn = Riakc.Conn
 open Deferred.Result.Monad_infix
 
 module String = Cache.String
-(*module StringCache = Caches.StringCache*)
-module StringCache = Caches.StringPrimitiveCache;;
+module StringCache = Caches.StringValueCache;;
 module State = struct
   type t = unit
 
   let create () = ()
 end
 
-let testkey = "29March15B"
+let testkey = "2May15"
 (*Only need to be able to resolve any conflicts b/c right now cannot even do that.
   Conflict resolution here is meant to be done in client code, not by riak. The
   context includes use of a bucket type in which siblings are allowed, not the default
@@ -138,8 +137,7 @@ let get_and_resolve_conflicts c =
 			 | Core.Std.Result.Error `Protobuf_encoder_error -> printf "Protobuf_encoder_error"; ()
 *)
   
-(*This doesn't work. First put doesnt take for some reason despite no apparent errors 
-(Puts have lower level printfs on errors). Better to break this out...*)
+(*This works. Just needed to use Time.pause not Unix.sleep*)
 let resolve_test c =
   let open Opts.Put in
   let module Robj = StringCache.Robj in
@@ -152,10 +150,11 @@ let resolve_test c =
   let robj = Robj.create (Robj.Content.create r1aspb) in
   let robj2 = Robj.create (Robj.Content.create r2aspb) in
   let key = testkey in
+  let span = Core.Std.Time.Span.of_int_sec 4 in 
   StringCache.put c ~opts ~k:key robj >>=
-    fun _ -> (let _ = printf "\nFirst put done..." in Core.Std.Unix.sleep 6; Deferred.return(Ok ())) >>=
+    fun _ -> (let _ = printf "\nFirst put done..." in let _ = Core.Std.Time.pause span in Deferred.return(Ok ())) >>=
     fun _ -> StringCache.put c ~opts ~k:key robj2 >>=
-    fun _ -> (let _ = printf "\nSecond put done..." in Unix.sleep 6; Deferred.return(Ok ())) >>=
+    fun _ -> (let _ = printf "\nSecond put done..." in  let _ = Core.Std.Time.pause span in Deferred.return(Ok ())) >>=
     fun _ -> let _ = printf "\nGetting key with siblings..." in get_and_resolve_conflicts c >>=
     fun _ -> exec_get c testkey >>=
     fun robj -> (let rlist = Robj.contents robj in
@@ -230,23 +229,18 @@ let get_resolve_put_test c =
 						  )
 					       )
 	       
-(*==========BOTH OF THESE APPROACHES FAIL TO PUT TWICE TO SAME KEY AND GET A SIBLING
-Not sure why...is riak that slow? Why no apparent error?==============*)
-(*let tests = [ ("resolve_test"           , resolve_test)]*)
+(*==========Finally got this to work...======================*)
+let tests = [ ("resolve_test"           , resolve_test)]
 (*let tests = [ ("resolve_test_firstput"           , resolve_test_firstput);
 	      ("resolve_test_secondput"           , resolve_test_secondput);
 	      ("get_resolve_put_test", get_resolve_put_test)]*)
-(*==================*)
-(*Back to old way naiive: force tester to recompile and re-execute 3 times, each time changing which "test" runs, first
-one makes first put, second one creates sibling with second put. Third and final real test gets and tries to resolve 
-sibling conflict then make a put. And WHILE we're troubleshooting we only needs to invoke the first 2 puts ONCE. We'll
-be focusing on fixing the 3rd step that is failing: the get, resolve, put cycle that is supposed to use a vclock to 
-resolve conflicts. Once you do the first 2 puts just keep working with those siblings.*)
+(*===========================================================*)
+(*OLD manner before use of Time.pause:*)
 (*===========FIRST PUT======= let tests = [ ("resolve_test_firstput", resolve_test_firstput)]*)
 (*===========SECOND PUT creates sibling======= let tests = [ ("resolve_test_secondput", resolve_test_secondput)]*)
 (*===========CONFLICT RESOLUTION: resolution of conflict is faiing=======*)
-let tests = [ ("get_resolve_put_test", get_resolve_put_test)]
-	      
+(*let tests = [ ("get_resolve_put_test", get_resolve_put_test) ]*)
+
 let execute_test t =
   let with_cache () =
     StringCache.with_cache
