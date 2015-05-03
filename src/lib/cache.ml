@@ -4,73 +4,26 @@ module Result = Core.Std.Result
 module Option = Core.Std.Option
 module Deferred = Async.Std.Deferred
 
-
-(* The internal protocol version *)
-let proto_version = 0
-
-let encode_decode (b:string) =
-    let e = Protobuf.Encoder.create () in
-    Protobuf.Encoder.bytes (Bytes.of_string b) e; Protobuf.Encoder.to_string e
-
-type versioned = {version: int [@key 1]; data:string [@key 2]} [@@deriving protobuf]
-
-let serialize_version version to_protobuf v =
-  let e = Protobuf.Encoder.create () in
-  match version with
-  | 0 -> to_protobuf v e; Protobuf.Encoder.to_string e
-  | n -> failwith("Unknown serializer protocol version: " ^ (string_of_int n))
-
-let serialize_proto to_protobuf v  : string = 
- let e = Protobuf.Encoder.create () in 
- let versioned = {version=proto_version; 
-  data=serialize_version proto_version to_protobuf v} in
- versioned_to_protobuf versioned e;Protobuf.Encoder.to_string e
-
-let deserialize_version version from_protobuf b =
-  match version with 
-  | 0 -> let d = Protobuf.Decoder.of_string b in from_protobuf d
-  | n -> failwith("Unknown deserializer protocol version: " ^ (string_of_int n))
-		 
-let deserialize_proto (from_protobuf:Protobuf.Decoder.t -> 'a) (b:string) : 'a = 
-  let d = Protobuf.Decoder.of_string b in 
-  let versioned = versioned_from_protobuf d in
-  deserialize_version versioned.version from_protobuf versioned.data
-		      
-		      
 module Bytes = Protobuf_capables.Bytes
 module String = Protobuf_capables.String
 module Bool = Protobuf_capables.Bool
 module Int = Protobuf_capables.Int
-(*module StringPrimitive = Protobuf_capables.StringPrimitive*)
 module Default_usermeta = String
 
 module Default_index = struct 
   type t =   | String [@key 1] of string [@key 2]
-         | Integer [@key 3] of int [@key 4]
-         | Bad_int [@key 5] of string [@key 6]
-         | Unknown [@key 7] of string [@key 8] [@@deriving protobuf, show]
-
-(*====================================
-For some reason I cannot get the below new syntax to compile and
-my opam says ppx_deriving and ppx_deriving_protobuf is up to date. Not
-had a chance to diagnose.
-======================================*)
-(*
-module Default_index = struct
-  type t =   | String of (string [@key 2]) [@key 1]
-             | Integer of (int [@key 4]) [@key 3]
-             | Bad_int of (string [@key 6]) [@key 5]
-             | Unknown of (string [@key 8]) [@key 7] [@@deriving protobuf, show]
-			  *) 
+  | Integer [@key 3] of int [@key 4]
+  | Bad_int [@key 5] of string [@key 6]
+  | Unknown [@key 7] of string [@key 8] [@@deriving protobuf, show]
 end
 			 
 module type S =
   sig
-    module Key : Protobuf_capable.S
+    module Key : Protobuf_capable.Raw_S
     module Value : Protobuf_capable.S
     module Usermeta_value : Protobuf_capable.S
     module Index_value : Protobuf_capable.S
-			   
+
     type conn = Conn.t
     type t = { conn : conn; bucket : string; }
     val get_conn : t -> conn
@@ -241,7 +194,8 @@ module type S =
       ?k:Key.t ->
       'a Robj.t ->
       ('b Robj.t * Key.t Option.t, [> Opts.Put.error ]) Result.t
-							Async_kernel.Deferred.t
+	Async_kernel.Deferred.t
+
     val delete :
       t ->
       ?opts:Opts.Delete.t list ->
@@ -250,12 +204,12 @@ module type S =
 
     val purge :
       t ->
-      (unit, [> Opts.Delete.error]) Result.t Deferred.t
-				    
+      (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
+
     val purge2 :
       conn ->
       string ->
-      (unit, [> Opts.Delete.error]) Result.t Deferred.t
+      (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
 
     val index_search :
       t ->
@@ -263,7 +217,8 @@ module type S =
       index:Index_value.t ->
       Opts.Index_search.Query.t ->
       (Response.Index_search.t, [> Opts.Index_search.error ]) Result.t
-							      Async_kernel.Deferred.t
+       Async_kernel.Deferred.t
+
     val bucket_props :
       t ->
       (Response.Props.t,
@@ -277,22 +232,22 @@ module type S =
         Async.Std.Deferred.Result.t
   end
 
-module Make_with_usermeta_index
-	 (Key:Protobuf_capable.S) 
+module Make_with_usermeta_index_raw_key
+	 (Key:Protobuf_capable.Raw_S)
 	 (Value:Protobuf_capable.S) 
 	 (Usermeta_value: Protobuf_capable.S) 
 	 (Index_value:Protobuf_capable.S) = struct 
-  
+
   module Key = Key
   module Value = Value
   module Usermeta_value = Usermeta_value
   module Index_value = Index_value
 			 
-  let serialize_key = serialize_proto Key.to_protobuf 
-  let serialize_value = serialize_proto Value.to_protobuf 
+  let serialize_key = Key.to_string 
+  let serialize_value = Protobuf_capable.serialize_proto Value.to_protobuf 
 					
-  let deserialize_key = deserialize_proto Key.from_protobuf 
-  let deserialize_value = deserialize_proto Value.from_protobuf
+  let deserialize_key = Key.of_string
+  let deserialize_value = Protobuf_capable.deserialize_proto Value.from_protobuf
 					    
   type conn = Conn.t 
   type t = {conn:conn;bucket:string} 
@@ -357,11 +312,12 @@ module Make_with_usermeta_index
 			     
       let to_unsafe (t:t) : Unsafe.t = 
 	let key = serialize_key (key t) in
-	let value = Option.map (value t) (serialize_proto V.to_protobuf) in
+
+	let value = Option.map (value t) (Protobuf_capable.serialize_proto V.to_protobuf) in
 	{ Unsafe.key; Unsafe.value}
 	  
       let from_unsafe (t:Unsafe.t) : t =
-	let value = Option.map (Unsafe.value t) (deserialize_proto V.from_protobuf) in
+	let value = Option.map (Unsafe.value t) (Protobuf_capable.deserialize_proto V.from_protobuf) in
 	let key = deserialize_key (Unsafe.key t) in {key;value}
     end
 								
@@ -393,7 +349,8 @@ module Make_with_usermeta_index
       let usermeta t         = t.usermeta
       let indices t          = t.indices
       let deleted t          = match t.deleted with Some x -> x | None -> false
-									    
+
+	
       let create v = {value = v; 
 		      content_type=None;
 		      charset=None;
@@ -406,17 +363,20 @@ module Make_with_usermeta_index
 		      deleted=None}
 		       
       let to_unsafe (t:t) : Unsafe_Robj.Content.t = 
-	let module C = Unsafe_Robj.Content in
-	let content = C.create (serialize_value t.value) in
-	(C.set_content_type t.content_type 
-			    (C.set_charset t.charset 
-					   (C.set_content_encoding t.content_encoding 
-								   (C.set_vtag t.vtag 
-									       (C.set_links (List.map Link.to_unsafe t.links) 
-											    (C.set_last_mod t.last_mod 
-													    (C.set_last_mod_usec t.last_mod_usec 
-																 (C.set_usermeta (List.map Usermeta.to_unsafe t.usermeta) 
-																		 (C.set_indices (List.map Index.to_unsafe t.indices) content)))))))))
+
+        let module C = Unsafe_Robj.Content in 
+        let open C in 
+        create (serialize_value t.value) |>
+        set_content_type t.content_type |>
+        set_charset t.charset |>
+        set_content_encoding t.content_encoding |> 
+        set_vtag t.vtag  |>
+        set_links (List.map Link.to_unsafe t.links) |> 
+        set_last_mod t.last_mod |>
+        set_last_mod_usec t.last_mod_usec |>
+        set_usermeta (List.map Usermeta.to_unsafe t.usermeta) |> 
+        set_indices (List.map Index.to_unsafe t.indices)
+
       let from_unsafe (content:Unsafe_Robj.Content.t) =
 	let module C = Unsafe_Robj.Content in
 	let v = deserialize_value (C.value content) in
@@ -490,13 +450,13 @@ module Make_with_usermeta_index
 							      
   let with_cache ~host ~port ~bucket f =
     Conn.with_conn host port (fun conn -> (f (create ~conn ~bucket)))
-		   
+
   let list_keys cache = Conn.list_keys cache.conn cache.bucket >>| function
-								 | Result.Ok keys ->
-								    Result.Ok (List.map (fun (b:string) -> Key.from_protobuf (Protobuf.Decoder.of_string (encode_decode b))) keys)
-								 | Result.Error err ->
-								    Result.Error err
-										 
+    | Result.Ok keys -> (** TODO - why do I need encode_decode here ? *)
+        Result.Ok (List.map (fun (b:string) -> Key.of_string (Protobuf_capable.encode_decode b)) keys)
+    | Result.Error err ->
+        Result.Error err
+
   let get cache ?(opts = []) (k:Key.t) = Conn.get cache.conn ~opts ~b:cache.bucket (serialize_key k) 
 					 >>| function
 					   | Result.Ok robj_unsafe -> begin
@@ -533,48 +493,54 @@ module Make_with_usermeta_index
       serialized_key
     >>| function
       | Result.Ok () ->
-	 Result.Ok ()
+ Result.Ok ()
       | Result.Error err ->
-	 Result.Error err
-
-  (*val purge :
-    t ->
-    (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t*)
+   Result.Error err
   let purge cache = Conn.purge cache.conn cache.bucket
-		    >>| function
-		      | Result.Ok () -> Result.Ok ()
-		      | Result.Error err -> Result.Error err
+   >>| function
+     | Result.Ok () -> Result.Ok ()
+     | Result.Error err -> Result.Error err
 
   let purge2 conn bucket = Conn.purge conn bucket
-			   >>| function
-			     | Result.Ok () -> Result.Ok ()
-			     | Result.Error err -> Result.Error err
-		      
+     >>| function
+       | Result.Ok () -> Result.Ok ()
+       | Result.Error err -> Result.Error err
+
+
   let index_search t ?(opts = []) ~(index:Index_value.t) query_type =
     Conn.index_search
       t.conn
       ~opts
       ~b:t.bucket
-      ~index:(serialize_proto Index_value.to_protobuf index)
+      ~index:(Protobuf_capable.serialize_proto Index_value.to_protobuf index)
       query_type
     >>| function
       | Result.Ok results ->
-	 Result.Ok results
+        Result.Ok results
       | Result.Error err ->
-	 Result.Error err
-		      
+        Result.Error err
   let bucket_props t = Conn.bucket_props (get_conn t) (get_bucket t)
 end
 
+module Conv = Protobuf_capable.Conversion.Make
+
+module Make_with_usermeta_index
+ (Key:Protobuf_capable.S)
+ (Value:Protobuf_capable.S) 
+ (Usermeta_value: Protobuf_capable.S) 
+ (Index_value:Protobuf_capable.S) = 
+   Make_with_usermeta_index_raw_key(Conv(Key))(Value)(Usermeta_value)(Index_value)
+
 module Make_with_usermeta(Key:Protobuf_capable.S) (Value:Protobuf_capable.S) (Usermeta_value:Protobuf_capable.S) =
   Make_with_usermeta_index(Key) (Value) (Usermeta_value) (Default_index)
-			  
-module Make_with_index(Key:Protobuf_capable.S)(Value:Protobuf_capable.S)(Index_value:Protobuf_capable.S) =
-  Make_with_usermeta_index(Key) (Value) (Default_usermeta) (Index_value)
 
-module Make_with_value(Value:Protobuf_capable.S) =
-  Make_with_usermeta_index(String) (Value) (Default_usermeta) (Default_index)
+module Make_with_index(Key:Protobuf_capable.S)(Value:Protobuf_capable.S)(Index_value:Protobuf_capable.S) =
+  Make_with_usermeta_index(Key)(Value) (Default_usermeta) (Index_value)
+
+module Make_with_string_key(Value:Protobuf_capable.S) =
+  Make_with_usermeta_index_raw_key(Core.Std.String)
+  (Value) (Default_usermeta) (Default_index)
 
 module Make(Key:Protobuf_capable.S) (Value:Protobuf_capable.S) =
-  Make_with_usermeta_index(Key) (Value) (Default_usermeta) (Default_index)
+  Make_with_usermeta_index_raw_key(Conv(Key)) (Value) (Default_usermeta) (Default_index)
 

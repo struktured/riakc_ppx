@@ -15,14 +15,15 @@ module Default_index : sig
   val pp : Format.formatter -> t -> unit
   val show : t -> string
 end
-			 
+
+
 module type S =
   sig
-    module Key : Protobuf_capable.S
+    module Key : Protobuf_capable.Raw_S
     module Value : Protobuf_capable.S
     module Usermeta_value : Protobuf_capable.S
     module Index_value : Protobuf_capable.S
-			   
+
     type conn = Conn.t
     type t = { conn : conn; bucket : string; }
     val get_conn : t -> conn
@@ -70,7 +71,7 @@ module type S =
             Pair(Unsafe_Robj.Usermeta)(Usermeta_value).t = {
             key : Key.t;
             value : Usermeta_value.t option;
-	  }
+        }
         val create : k:Key.t -> v:Usermeta_value.t option -> t
         val key : t -> Key.t
         val value : t -> Usermeta_value.t option
@@ -179,7 +180,8 @@ module type S =
       ?k:Key.t ->
       'a Robj.t ->
       ('b Robj.t * Key.t Option.t, [> Opts.Put.error ]) Result.t
-							Deferred.t
+        Deferred.t
+
     val delete :
       t ->
       ?opts:Opts.Delete.t list ->
@@ -188,40 +190,47 @@ module type S =
 
     val purge :
       t ->
-      (unit, [> Opts.Delete.error]) Result.t Deferred.t
-
+      (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
     val purge2 :
       conn ->
       string ->
-      (unit, [> Opts.Delete.error]) Result.t Deferred.t
-
+      (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
     val index_search :
       t ->
       ?opts:Opts.Index_search.t list ->
       index:Index_value.t ->
       Opts.Index_search.Query.t ->
       (Response.Index_search.t, [> Opts.Index_search.error ]) Result.t
-							      Deferred.t
+        Deferred.t
     val bucket_props : t -> (Response.Props.t, [> Conn.error | Response.error ]) Deferred.Result.t
   end
 
-    
-module Make_with_usermeta_index :
+module Make_with_usermeta_index_raw_key :
 functor
-  (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Usermeta_value : Protobuf_capable.S) (Index_value : Protobuf_capable.S) -> S 
-  with 
+  (Key : Protobuf_capable.Raw_S) (Value : Protobuf_capable.S) (Usermeta_value : Protobuf_capable.S) (Index_value : Protobuf_capable.S) -> S
+  with
     type Key.t = Key.t and 
     type Value.t = Value.t and 
     type Usermeta_value.t = Usermeta_value.t and
     type Index_value.t = Index_value.t
-		   
+
+    
+module Make_with_usermeta_index :
+functor
+  (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Usermeta_value : Protobuf_capable.S) (Index_value : Protobuf_capable.S) -> S
+  with
+    type Key.t = Key.t and 
+    type Value.t = Value.t and 
+    type Usermeta_value.t = Usermeta_value.t and
+    type Index_value.t = Index_value.t
+			   
 module Make_with_usermeta :
 functor
   (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Usermeta_value : Protobuf_capable.S) ->
 module type of Make_with_usermeta_index(Key)(Value)(Usermeta_value)(Default_index)
 				       
 module Make_with_index :
-  functor
+functor
   (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Index_value : Protobuf_capable.S) ->
 
 module type of Make_with_usermeta_index(Key)(Value)(Default_usermeta)(Index_value)
@@ -230,7 +239,11 @@ module Make :
 functor (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) 
 	-> module type of Make_with_usermeta(Key)(Value)(Default_usermeta)
 
-module Make_with_value :
+module Make_with_string_key :
   functor (Value : Protobuf_capable.S) ->
-    module type of Make_with_usermeta(String)(Value)(Default_usermeta)
-
+    module type of Make_with_usermeta_index_raw_key(Core.Std.String)(Value)(Default_usermeta)(Default_index)
+(*
+module Make :
+functor (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) -> 
+  module type of Make_with_usermeta(Key)(Value)(Default_usermeta)
+ *)

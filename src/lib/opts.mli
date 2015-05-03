@@ -1,41 +1,41 @@
 
 module Quorum : sig
   type t =
-    | One 
-    | All 
-    | Default 
-    | Quorum 
-    | N of int 
+    | One
+    | All
+    | Default
+    | Quorum
+    | N of int
   val to_int32 : t -> int
-  val of_int32 : Core.Std.Int32.t -> t 
+  val of_int32 : Core.Std.Int32.t -> t
 end
 
 module Get :
 sig
-  type error =[ `Bad_conn | `Notfound | Response.error ] 
+  type error = [ `Bad_conn | `Notfound | Response.error ] 
 
   type t =
-    | Timeout      of int 
-    | R           of Quorum.t 
-    | Pr          of Quorum.t 
-    | If_modified of string 
-    | Basic_quorum 
-    | Notfound_ok 
+    | Timeout      of int
+    | R           of Quorum.t
+    | Pr          of Quorum.t
+    | If_modified of string
+    | Basic_quorum
+    | Notfound_ok
     | Head
     | Deletedvclock
     | BucketType of string
 
-  type get = { bucket        : string 
-             ; key           : string 
-             ; r             : int option 
+  type get = { bucket        : string
+             ; key           : string
+             ; r             : int option
              ; pr            : int option
              ; basic_quorum : bool option
              ; notfound_ok : bool option
-             ; if_modified   : string option 
-             ; head : bool option 
+             ; if_modified   : string option
+             ; head : bool option
              ; deletedvclock : bool option
-	     ; bucket_type   : string option
-  } 
+             ; bucket_type   : string option
+  }
 
   val get_from_protobuf : Protobuf.Decoder.t -> get
   val get_to_protobuf : get -> Protobuf.Encoder.t -> unit
@@ -45,18 +45,18 @@ sig
 
 end
 
-module Put : 
+module Put :
 sig
 
 
-  type error = [ `Bad_conn | Response.error |`Wrong_type ] 
+  type error = [ `Bad_conn | Response.error |`Wrong_type ]
   type t =
-    | Timeout of int 
-    | W       of Quorum.t 
-    | Dw      of Quorum.t 
-    | Pw      of Quorum.t 
-    | Return_body 
-    (*| If_not_modified 
+    | Timeout of int
+    | W       of Quorum.t
+    | Dw      of Quorum.t
+    | Pw      of Quorum.t
+    | Return_body
+    (*| If_not_modified
     | If_none_match *)
     | Return_head 
     | Bucket_type of string
@@ -68,11 +68,11 @@ sig
              ; dw              : int option
              ; return_body     : bool option 
              ; pw              : int option
-             (*; if_not_modified : bool option 
+             (*; if_not_modified : bool option
              ; if_none_match   : bool option *)
              ; return_head     : bool option
-	     ; bucket_type     : string option
-  } 
+             ; bucket_type     : string option
+  }
 
   val put_from_protobuf : Protobuf.Decoder.t -> put
   val put_to_protobuf : put -> Protobuf.Encoder.t -> unit
@@ -80,7 +80,7 @@ sig
   val put_of_opts : t list -> b:string -> k:string option -> [ `No_siblings ] Robj.t -> put
 end
 
-module Delete : 
+module Delete :
 sig
   type error = [ `Bad_conn | Response.error ]
 
@@ -91,7 +91,7 @@ sig
     | W       of Quorum.t
     | Pr      of Quorum.t
     | Pw      of Quorum.t
-    | Dw      of Quorum.t 
+    | Dw      of Quorum.t
     | BucketType of string
   type delete = { bucket : string 
                 ; key    : string 
@@ -102,8 +102,8 @@ sig
                 ; pr     : int option 
                 ; pw     : int option 
                 ; dw     : int option
-		; bucket_type : string option
-  } 
+                ; bucket_type : string option
+  }
 
   val delete_from_protobuf : Protobuf.Decoder.t -> delete
   val delete_to_protobuf : delete -> Protobuf.Encoder.t -> unit
@@ -115,20 +115,20 @@ module Index_search : sig
   type error = [ `Bad_conn | Response.error ]
 
   module Query : sig
-    type 'a range = { min          : 'a 
+    type 'a range = { min          : 'a
                     ; max          : 'a
-                    ; return_terms : bool 
+                    ; return_terms : bool
     }
 
-    type string_range = { min          : string 
-                    ; max          : string 
-                    ; return_terms : bool 
-    } 
+    type string_range = { min          : string
+                    ; max          : string
+                    ; return_terms : bool
+    }
 
-   type int_range = { min          : int 
-                    ; max          : int 
-                   ; return_terms : bool 
-    } 
+   type int_range = { min          : int
+                    ; max          : int
+                   ; return_terms : bool
+    }
 
   val string_range_from_protobuf : Protobuf.Decoder.t -> string_range
   val string_range_to_protobuf : string_range -> Protobuf.Encoder.t -> unit
@@ -172,9 +172,9 @@ module Index_search : sig
                       ; continuation : Kontinuation.t option 
                       ; timeout      : int option 
   }
- 
- val index_search_from_protobuf : Protobuf.Decoder.t -> index_search
- val index_search_to_protobuf : index_search -> Protobuf.Encoder.t -> unit
+
+  val index_search_from_protobuf : Protobuf.Decoder.t -> index_search
+  val index_search_to_protobuf : index_search -> Protobuf.Encoder.t -> unit
 
 
   val index_search_of_opts :

@@ -125,21 +125,23 @@ module Put = struct
     | Dw     of Quorum.t
     | Pw     of Quorum.t
     | Return_body 
+    (*| If_not_modified 
+    | If_none_match  *)
     | Return_head 
     | Bucket_type of string
   module Content = Robj.Content
   module Robj = Robj
   (*note; int is being used below for uint32
-MISSING ELEMENTS: 12,14 - 16
+MISSING ELEMENTS: 9,10,12 - 16
 optional uint32 timeout = 12
+optional bool asis = 13
 optional bool sloppy_quorum = 14
 optional uint32 n_val = 15
 optional bytes type = 16
 
 The if_not_modified, if_none_match and asis parameters are 
 set only for messages between nodes...clients should not set these.
-So why are some below?
-optional bool asis = 13
+
    *)
   type put = { bucket          : string [@key 1]
              ; key             : string option [@key 2] [@default ""]
@@ -149,6 +151,8 @@ optional bool asis = 13
              ; dw              : int option [@key 6] [@default false]
              ; return_body     : bool option [@key 7] [@default false]
              ; pw              : int option [@key 8] [@default false]
+             (*; if_not_modified : bool option [@key 9] [@default false]
+             ; if_none_match   : bool option [@key 10] [@default false]*)
              ; return_head     : bool option [@key 11] [@default false]
 	     ; bucket_type     : string option [@key 16] [@default "default"]
   } [@@deriving protobuf]
@@ -162,6 +166,8 @@ optional bool asis = 13
 	    ; dw              = None
 	    ; pw              = None
 	    ; return_body     = None
+	    (*; if_not_modified = None
+	    ; if_none_match   = None*)
 	    ; return_head     = None
 	    ; bucket_type     = None
 	    }
@@ -178,6 +184,10 @@ optional bool asis = 13
 	  { p with pw = Some (Quorum.to_int32 n) }
 	| Return_body ->
 	  { p with return_body = Some true }
+	(*| If_not_modified ->
+	  { p with if_not_modified = Some true }
+	| If_none_match ->
+	  { p with if_none_match = Some true }*)
 	| Return_head ->
 	   { p with return_head = Some true }
 	| Bucket_type buckettype ->

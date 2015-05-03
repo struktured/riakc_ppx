@@ -1,4 +1,3 @@
-
 let option_of_bool = function
   | Some true -> Some true
   | _         -> None
@@ -94,7 +93,6 @@ module Content = struct
   let set_last_mod_usec lmu t   = { t with last_mod_usec = lmu }
   let set_usermeta u t          = { t with usermeta = u }
   let set_indices i t           = { t with indices = i }
-
 
 end
 

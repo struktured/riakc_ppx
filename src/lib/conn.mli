@@ -59,24 +59,8 @@ val delete :
 val purge :
   t ->
   b:string ->
-  (*  keys:string Core.Std.List.t ->*)
   (unit, [>Opts.Delete.error]) Deferred.Result.t
-(*
-val purge :
-  t ->
-  ?opts:'a list ->
-  b:string ->
-  keys:string Core.Std.List.t ->
-  (unit,
-   [> `Bad_conn
-   | `Bad_payload
-   | `Incomplete
-   | `Incomplete_payload
-   | `Overflow
-   | `Unknown_type
-   | `Wrong_type ])
-    Core.Std._result Async_kernel.Deferred.t
- *)				 
+
 val index_search :
   t ->
   ?opts:Opts.Index_search.t list ->

@@ -7,14 +7,16 @@ module Rconn = Riakc.Conn
 open Deferred.Result.Monad_infix
 
 module String = Cache.String
-module StringCache = Caches.StringValueCache;;
+module StringCache = Caches.StringCache
+(*module StringCache = Caches.StringPrimitiveCache;;*)
 module State = struct
   type t = unit
 
   let create () = ()
 end
 
-let testkey = "2May15"
+let testkey = "3May_B"
+
 (*Only need to be able to resolve any conflicts b/c right now cannot even do that.
   Conflict resolution here is meant to be done in client code, not by riak. The
   context includes use of a bucket type in which siblings are allowed, not the default
@@ -94,8 +96,7 @@ let exec_update c updated_robj =
   StringCache.put c ~opts ~k:testkey updated_robj >>|
     (fun x -> match x with
 		(robj, (Some key)) -> ()
-	      | (robj, None) -> ()
-	      | _ -> printf "\nPut error." ; ())
+	      | (robj, None) -> ())
       
 let exec_get c k =
   let open Opts.Get in
@@ -137,6 +138,7 @@ let get_and_resolve_conflicts c =
 			 | Core.Std.Result.Error `Protobuf_encoder_error -> printf "Protobuf_encoder_error"; ()
 *)
   
+
 (*This works. Just needed to use Time.pause not Unix.sleep*)
 let resolve_test c =
   let open Opts.Put in
