@@ -181,11 +181,13 @@ module type S =
       'a Robj.t ->
       ('b Robj.t * Key.t Option.t, [> Opts.Put.error ]) Result.t
         Deferred.t
+
     val delete :
       t ->
       ?opts:Opts.Delete.t list ->
       Key.t ->
       (unit, [> Opts.Delete.error ]) Result.t Deferred.t
+
     val purge :
       t ->
       (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
@@ -221,23 +223,27 @@ functor
     type Value.t = Value.t and 
     type Usermeta_value.t = Usermeta_value.t and
     type Index_value.t = Index_value.t
-
+			   
 module Make_with_usermeta :
 functor
   (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Usermeta_value : Protobuf_capable.S) ->
-    module type of Make_with_usermeta_index(Key)(Value)(Usermeta_value)(Default_index)
-
+module type of Make_with_usermeta_index(Key)(Value)(Usermeta_value)(Default_index)
+				       
 module Make_with_index :
 functor
   (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) (Index_value : Protobuf_capable.S) ->
-    module type of Make_with_usermeta_index(Key)(Value)(Default_usermeta)(Index_value)
 
+module type of Make_with_usermeta_index(Key)(Value)(Default_usermeta)(Index_value)
+
+module Make :
+functor (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) 
+	-> module type of Make_with_usermeta(Key)(Value)(Default_usermeta)
 
 module Make_with_string_key :
   functor (Value : Protobuf_capable.S) ->
     module type of Make_with_usermeta_index_raw_key(Core.Std.String)(Value)(Default_usermeta)(Default_index)
-
+(*
 module Make :
 functor (Key : Protobuf_capable.S) (Value : Protobuf_capable.S) -> 
   module type of Make_with_usermeta(Key)(Value)(Default_usermeta)
-
+ *)
