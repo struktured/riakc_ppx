@@ -222,13 +222,13 @@ let purge t ~b =
   let rec thepurge keys =
     match keys with  
     | key :: tail -> delete t ~b key >>=
-      (function
-        | Ok ()-> thepurge tail
-                         | Error err -> Deferred.return(Error err))
-      | [] -> Deferred.return(Ok()) in
+		       (function
+			 | Ok ()-> thepurge tail
+			 | Error err -> Deferred.return(Error err))
+    | [] -> Deferred.return(Ok()) in
   list_keys t b >>= (fun lok -> match lok with
-                                | Ok keys -> thepurge keys
-                                | Error err -> Deferred.return(Error err))
+				| Ok keys -> thepurge keys
+				| Error err -> Deferred.return(Error err))
 
 let index_search t ?(opts = []) ~b ~index query_type =
   let idx_s =

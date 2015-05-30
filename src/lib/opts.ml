@@ -132,16 +132,16 @@ module Put = struct
   module Content = Robj.Content
   module Robj = Robj
   (*note; int is being used below for uint32
-MISSING ELEMENTS: 12,14 - 16
+MISSING ELEMENTS: 9,10,12 - 16
 optional uint32 timeout = 12
+optional bool asis = 13
 optional bool sloppy_quorum = 14
 optional uint32 n_val = 15
 optional bytes type = 16
 
 The if_not_modified, if_none_match and asis parameters are 
 set only for messages between nodes...clients should not set these.
-So why are some below?
-optional bool asis = 13
+
    *)
   type put = { bucket          : string [@key 1]
              ; key             : string option [@key 2] [@default ""]

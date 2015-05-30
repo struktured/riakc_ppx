@@ -16,7 +16,7 @@ module Default_index = struct
   | Bad_int [@key 5] of string [@key 6]
   | Unknown [@key 7] of string [@key 8] [@@deriving protobuf, show]
 end
-
+			 
 module type S =
   sig
     module Key : Protobuf_capable.Raw_S
@@ -86,7 +86,7 @@ module type S =
                   Pair(Unsafe_Robj.Index)(Index_value).t = {
                   key : Key.t;
                 value : Index_value.t option;
-              }
+		}
               val create : k:Key.t -> v:Index_value.t option -> t
               val key : t -> Key.t
               val value : t -> Index_value.t option
@@ -195,11 +195,13 @@ module type S =
       'a Robj.t ->
       ('b Robj.t * Key.t Option.t, [> Opts.Put.error ]) Result.t
 	Async_kernel.Deferred.t
+
     val delete :
       t ->
       ?opts:Opts.Delete.t list ->
       Key.t ->
       (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
+
     val purge :
       t ->
       (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
@@ -209,7 +211,6 @@ module type S =
       string ->
       (unit, [> Opts.Delete.error ]) Result.t Async_kernel.Deferred.t
 
-
     val index_search :
       t ->
       ?opts:Opts.Index_search.t list ->
@@ -217,6 +218,7 @@ module type S =
       Opts.Index_search.Query.t ->
       (Response.Index_search.t, [> Opts.Index_search.error ]) Result.t
        Async_kernel.Deferred.t
+
     val bucket_props :
       t ->
       (Response.Props.t,
@@ -229,8 +231,6 @@ module type S =
        | `Wrong_type ])
         Async.Std.Deferred.Result.t
   end
-
-
 
 module Make_with_usermeta_index_raw_key
 	 (Key:Protobuf_capable.Raw_S)
@@ -312,6 +312,7 @@ module Make_with_usermeta_index_raw_key
 			     
       let to_unsafe (t:t) : Unsafe.t = 
 	let key = serialize_key (key t) in
+
 	let value = Option.map (value t) (Protobuf_capable.serialize_proto V.to_protobuf) in
 	{ Unsafe.key; Unsafe.value}
 	  
@@ -348,6 +349,7 @@ module Make_with_usermeta_index_raw_key
       let usermeta t         = t.usermeta
       let indices t          = t.indices
       let deleted t          = match t.deleted with Some x -> x | None -> false
+
 	
       let create v = {value = v; 
 		      content_type=None;
@@ -361,6 +363,7 @@ module Make_with_usermeta_index_raw_key
 		      deleted=None}
 		       
       let to_unsafe (t:t) : Unsafe_Robj.Content.t = 
+
         let module C = Unsafe_Robj.Content in 
         let open C in 
         create (serialize_value t.value) |>
