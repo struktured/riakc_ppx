@@ -15,6 +15,7 @@ remove: [
 
 depends: [
   "omake" {build}
+  "ocaml" {>= "4.02.2"} {build}
   "ocamlfind"
   "core" {>= "109.12.00"}
   "async"
