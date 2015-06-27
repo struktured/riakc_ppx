@@ -5,20 +5,21 @@ author : "Carmelo Piccione carmelo.piccione+riakc_ppx@gmail.com"
 maintainer: "carmelo.piccione+riakc_ppx@gmail.com"
 homepage: "https://github.com/struktured/riakc_ppx"
 build: [
-  ["omake" "-j4"]
+  ["omake" "-j2"]
   ["omake" "install"]
 ]
+
+available: [ ocaml-version >= "4.02.2" ]
 
 remove: [
   ["ocamlfind" "remove" "riakc_ppx"]
 ]
 
 depends: [
-  "omake" {build}
   "ocamlfind"
   "core" {>= "109.12.00"}
   "async"
-  "ppx_deriving_protobuf"
-  "bitstring"
+  "ppx_deriving_protobuf" {>= "2.0"}
+  "bitstring" {>= "2.0.4"}
+  "omake" {build}
 ]
-available: [ ocaml-version >= "4.02.2" ]
