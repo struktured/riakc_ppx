@@ -1,20 +1,20 @@
 opam-version: "1.2"
-name: "riakc_ppx"
 version: "dev"
-author : "Carmelo Piccione carmelo.piccione+riakc_ppx@gmail.com"
 maintainer: "carmelo.piccione+riakc_ppx@gmail.com"
+authors: "Carmelo Piccione carmelo.piccione+riakc_ppx@gmail.com"
 homepage: "https://github.com/struktured/riakc_ppx"
+dev-repo: "https://github.com/struktured/riakc_ppx"
+bug-reports: "https://github.com/struktured/riakc_ppx"
+
 build: [
   ["omake" "-j2"]
+]
+
+install: [
   ["omake" "install"]
 ]
 
-available: [ ocaml-version >= "4.02.2" ]
-
-remove: [
-  ["ocamlfind" "remove" "riakc_ppx"]
-]
-
+remove: ["ocamlfind" "remove" "riakc_ppx"]
 depends: [
   "ocamlfind"
   "core" {>= "109.12.00"}
@@ -23,3 +23,4 @@ depends: [
   "bitstring" {>= "2.0.4"}
   "omake" {build}
 ]
+available: [ocaml-version >= "4.02.2"]
