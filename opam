@@ -3,7 +3,7 @@ version: "dev"
 maintainer: "carmelo.piccione+riakc_ppx@gmail.com"
 authors: "Carmelo Piccione carmelo.piccione+riakc_ppx@gmail.com"
 homepage: "https://github.com/struktured/riakc_ppx"
-dev-repo: "git://github.com/struktured/riakc_ppx#master"
+dev-repo: "git@github.com:struktured/riakc_ppx"
 bug-reports: "https://github.com/struktured/riakc_ppx/issues"
 
 
