@@ -12,10 +12,11 @@ module Default_usermeta = String
 
 module Default_index =
   struct
-    type t =   | String of (string [@key 2]) [@key 1]
-    | Integer of (int [@key 4]) [@key 3]
-    | Bad_int of (string [@key 6]) [@key 5]
-    | Unknown of (string [@key 8]) [@key 7] [@@deriving protobuf, show]
+    type t =
+      | String of (string [@key 2]) [@key 1]
+      | Integer of (int [@key 4]) [@key 3]
+      | Bad_int of (string [@key 6]) [@key 5]
+      | Unknown of (string [@key 8]) [@key 7] [@@deriving protobuf, show]
   end
 
 module type S =

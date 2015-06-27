@@ -74,16 +74,16 @@ let delete d () =
   Result.Ok (wrap_request '\x0D' (E.to_string e))
 
 type decorated_index_search = {
-    bucket: string [@key 1];
-    idx : string [@key 2];
-    query_type : Opts.Index_search.Query.t [@key 3];
-    key: string option [@key 4];
-    min : string option [@key 5];
-    max : string option [@key 6];
-    rt : bool option [@key 7];
-    stream : bool [@key 8];
-    max_results: int option [@key 9];
-    cont: string option [@key 10]
+    bucket: (string [@key 1]);
+    idx : (string [@key 2]);
+    query_type : (Opts.Index_search.Query.t [@key 3]);
+    key: (string option [@key 4]);
+    min : (string option [@key 5]);
+    max : (string option [@key 6]);
+    rt : (bool option [@key 7]);
+    stream : (bool [@key 8]);
+    max_results: (int option [@key 9]);
+    cont: (string option [@key 10])
   } [@@deriving protobuf]
 
 

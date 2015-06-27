@@ -5,7 +5,7 @@ module Default_index = Cache.Default_index
 
 module CompositeKey = 
   struct
-    type t = { name: string [@key 1]; id: int [@key 2]} [@@deriving protobuf, show]
+    type t = { name: (string [@key 1]); id: (int [@key 2])} [@@deriving protobuf, show]
   end
 
 module VariantValue =
