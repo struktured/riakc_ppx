@@ -1,4 +1,6 @@
+module OldBytes = Bytes
 open Core.Std
+module Bytes = OldBytes
 open Async.Std
 
 module Default_index = Cache.Default_index
