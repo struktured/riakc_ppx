@@ -1,5 +1,6 @@
 opam-version: "1.2"
 version: "dev"
+name: "riakc_ppx"
 maintainer: "carmelo.piccione+riakc_ppx@gmail.com"
 authors: "Carmelo Piccione carmelo.piccione+riakc_ppx@gmail.com"
 homepage: "https://github.com/struktured/riakc_ppx"
@@ -18,7 +19,7 @@ install: [
 remove: ["ocamlfind" "remove" "riakc_ppx"]
 depends: [
   "ocamlfind"
-  "core" {>= "109.12.00"}
+  "core" {>= "113.00.00"}
   "async"
   "ppx_deriving_protobuf" {>= "2.0"}
   "bitstring" {>= "2.0.4"}

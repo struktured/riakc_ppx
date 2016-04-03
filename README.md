@@ -89,6 +89,9 @@ utop # C.with_cache ~host:"localhost" ~port:8087 ~bucket:"demo-bucket1" (fun c -
  * support for non-protobuf key types (such as primitive strings)
  * conflict resolution fixes, with tests (thanks @pat227)
 
+## 3.1.4 ##
+ * Support for core 113.0.0+ api changes
+
 # Contributing / Future work
 
 ## Future work
