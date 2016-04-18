@@ -77,11 +77,12 @@ let list_buckets payload = let open Result.Monad_infix in
  run '\x10' payload Buckets.from_protobuf >>= fun list_buckets -> Result.Ok (Done list_buckets)
 
 module Props = struct
-  type t = {n_val : int option [@key 1] [@default 0]; allow_mult: bool option [@key 2] [@default false]} [@@deriving protobuf]
+  type t = {n_val : (int option [@key 1] [@default 0]); allow_mult: (bool option [@key 2] [@default false])} 
+    [@@deriving protobuf]
 end
 
 module Nested(T:Protobuf_capable.S) = struct
-  type t = { value: T.t [@key 1]} [@@deriving protobuf]
+  type t = { value: (T.t [@key 1])} [@@deriving protobuf]
 end
 
 let bucket_props payload = let open Result.Monad_infix in
@@ -93,7 +94,7 @@ let bucket_props payload = let open Result.Monad_infix in
 type pair = (string * string option) [@@deriving protobuf] 
 
 module List_keys = struct 
-  type t = string list [@key 1] * (bool option [@key 2] [@default false]) [@@deriving protobuf] 
+  type t = (string list [@key 1]) * (bool option [@key 2] [@default false]) [@@deriving protobuf] 
 end
 
 let list_keys payload =
@@ -132,10 +133,10 @@ let put payload =
   Result.Ok (Done (Robj.of_pb c vclock None, key))
 
 module Index_search = struct
-  type t = { keys         : string list [@key 1]
-                    ; results      : (string * string option) list [@key 2]
-                    ; continuation : string option [@key 3]
-                    ; d : bool option [@key 4]
+  type t = { keys         : (string list [@key 1])
+                    ; results      : ((string * string option) list [@key 2])
+                    ; continuation : (string option [@key 3])
+                    ; d : (bool option [@key 4])
 } [@@deriving protobuf]
 
 end

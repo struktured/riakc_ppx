@@ -4,9 +4,9 @@ let option_of_bool = function
 
 
 module Link = struct
-  type t = { bucket : string option [@key 1]
-           ; key    : string option [@key 2]
-           ; tag    : string option [@key 3]
+  type t = { bucket : (string option [@key 1])
+           ; key    : (string option [@key 2])
+           ; tag    : (string option [@key 3])
   } [@@deriving protobuf]
 
   let bucket t = t.bucket
@@ -22,8 +22,8 @@ end
 
 
 module Pair = struct
-  type t = { key : string [@key 1]
-           ; value : string option [@key 2]
+  type t = { key : (string [@key 1])
+           ; value : (string option [@key 2])
   } [@@deriving protobuf]
 
   let create ~k ~v = { key = k; value = v }
@@ -44,17 +44,17 @@ module Content = struct
   module Usermeta = Usermeta 
   module Index = Index
 
-  type t = { value            : string [@key 1]
-	   ; content_type     : string option [@key 2]
-	   ; charset          : string option [@key 3]
-	   ; content_encoding : string option [@key 4]
-           ; vtag             : string option [@key 5]
-           ; links            : Link.t list   [@key 6]
-           ; last_mod         : Int32.t option [@key 7] [@encoding `varint]
-           ; last_mod_usec    : Int32.t option [@key 8] [@encoding `varint]
-           ; usermeta         : Usermeta.t list [@key 9]
-           ; indices          : Index.t list [@key 10]
-           ; deleted          : bool option [@key 11]
+  type t = { value            : (string [@key 1])
+	   ; content_type     : (string option [@key 2])
+	   ; charset          : (string option [@key 3])
+	   ; content_encoding : (string option [@key 4])
+           ; vtag             : (string option [@key 5])
+           ; links            : (Link.t list   [@key 6])
+           ; last_mod         : (Int32.t option [@key 7] [@encoding `varint])
+           ; last_mod_usec    : (Int32.t option [@key 8] [@encoding `varint])
+           ; usermeta         : (Usermeta.t list [@key 9])
+           ; indices          : (Index.t list [@key 10])
+           ; deleted          : (bool option [@key 11])
   } [@@deriving protobuf]
 
   let create v =

@@ -84,6 +84,14 @@ utop # C.with_cache ~host:"localhost" ~port:8087 ~bucket:"demo-bucket1" (fun c -
  * Fix to protobuf capable Bool module
  * Added protobuf capable Float module
 
+## 3.1.3 ##
+ * OCaml 4.02.2 support
+ * support for non-protobuf key types (such as primitive strings)
+ * conflict resolution fixes, with tests (thanks @pat227)
+
+## 3.1.4 ##
+ * Support for core 113.0.0+ api changes
+
 # Contributing / Future work
 
 ## Future work

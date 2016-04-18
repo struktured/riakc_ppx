@@ -22,7 +22,7 @@ let encode_decode (b:string) =
     let e = Protobuf.Encoder.create () in
     Protobuf.Encoder.bytes (Bytes.of_string b) e; Protobuf.Encoder.to_string e
 
-type versioned = {version: int [@key 1]; data:string [@key 2]} [@@deriving protobuf]
+type versioned = {version: (int [@key 1]); data:(string [@key 2])} [@@deriving protobuf]
 
 let serialize_version version to_protobuf (v:'a) =
   let e = Protobuf.Encoder.create () in

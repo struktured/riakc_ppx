@@ -1,23 +1,28 @@
 opam-version: "1.2"
-name: "riakc_ppx"
 version: "dev"
-author : "Carmelo Piccione carmelo.piccione+riakc_ppx@gmail.com"
+name: "riakc_ppx"
 maintainer: "carmelo.piccione+riakc_ppx@gmail.com"
+authors: "Carmelo Piccione carmelo.piccione+riakc_ppx@gmail.com"
 homepage: "https://github.com/struktured/riakc_ppx"
+dev-repo: "https://github.com/struktured/riakc_ppx.git"
+bug-reports: "https://github.com/struktured/riakc_ppx/issues"
+
+
 build: [
-  ["omake" "-j4"]
+  ["omake" "-j2"]
+]
+
+install: [
   ["omake" "install"]
 ]
 
-remove: [
-  ["ocamlfind" "remove" "riakc_ppx"]
-]
-
+remove: ["ocamlfind" "remove" "riakc_ppx"]
 depends: [
-  "omake" {build}
   "ocamlfind"
-  "core" {>= "109.12.00"}
+  "core" {>= "113.00.00"}
   "async"
-  "ppx_deriving_protobuf"
-  "bitstring"
+  "ppx_deriving_protobuf" {>= "2.0"}
+  "bitstring" {>= "2.0.4"}
+  "omake" {build}
 ]
+available: [ocaml-version >= "4.02.2"]

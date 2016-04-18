@@ -66,17 +66,17 @@ module Get = struct
     | Deletedvclock
     | BucketType of string
 
-  type get = { bucket        : string [@key 1]
-             ; key           : string [@key 2]
-             ; r             : int option [@key 3]
-             ; pr            : int option [@key 4]
-             ; basic_quorum  : bool option [@key 5]
-             ; notfound_ok   : bool option [@key 6]
-             ; if_modified   : string option [@key 7]
-             ; head          : bool option [@key 8]
-             ; deletedvclock : bool option [@key 9]
+  type get = { bucket        : (string [@key 1])
+             ; key           : (string [@key 2])
+             ; r             : (int option [@key 3])
+             ; pr            : (int option [@key 4])
+             ; basic_quorum  : (bool option [@key 5])
+             ; notfound_ok   : (bool option [@key 6])
+             ; if_modified   : (string option [@key 7])
+             ; head          : (bool option [@key 8])
+             ; deletedvclock : (bool option [@key 9])
 	     (*keys 10, 11, 12 are for uint32 timeout, bool sloppyquorum, uint32 n_val*)
-	     ; bucket_type   : string option [@key 13] [@default "default"]
+	     ; bucket_type   : (string option [@key 13] [@default "default"])
   } [@@deriving protobuf] 
   
   let get_of_opts (opts:t list) ~b ~k =
@@ -143,18 +143,18 @@ The if_not_modified, if_none_match and asis parameters are
 set only for messages between nodes...clients should not set these.
 
    *)
-  type put = { bucket          : string [@key 1]
-             ; key             : string option [@key 2] [@default ""]
-             ; vclock          : string option [@key 3] [@default ""]
-             ; content         : Content.t [@key 4]
-             ; w               : int option [@key 5] [@default false]
-             ; dw              : int option [@key 6] [@default false]
-             ; return_body     : bool option [@key 7] [@default false]
-             ; pw              : int option [@key 8] [@default false]
+  type put = { bucket          : (string [@key 1])
+             ; key             : (string option [@key 2] [@default ""])
+             ; vclock          : (string option [@key 3] [@default ""])
+             ; content         : (Content.t [@key 4])
+             ; w               : (int option [@key 5] [@default false])
+             ; dw              : (int option [@key 6] [@default false])
+             ; return_body     : (bool option [@key 7] [@default false])
+             ; pw              : (int option [@key 8] [@default false])
              (*; if_not_modified : bool option [@key 9] [@default false]
              ; if_none_match   : bool option [@key 10] [@default false]*)
-             ; return_head     : bool option [@key 11] [@default false]
-	     ; bucket_type     : string option [@key 16] [@default "default"]
+             ; return_head     : (bool option [@key 11] [@default false])
+	     ; bucket_type     : (string option [@key 16] [@default "default"])
   } [@@deriving protobuf]
 
   let put_of_opts opts ~b ~k (robj:'a Robj.t) =
@@ -208,16 +208,16 @@ module Delete = struct
     | Pw      of Quorum.t
     | Dw      of Quorum.t 
     | BucketType of string
-  type delete = { bucket : string [@key 1]
-                ; key    : string [@key 2]
-                ; rw     : int option [@key 3]
-                ; vclock : string option [@key 4]
-                ; r      : int option [@key 5]
-                ; w      : int option [@key 6]
-                ; pr     : int option [@key 7]
-                ; pw     : int option [@key 8]
-                ; dw     : int option [@key 9]
-		; bucket_type : string option [@key 13]
+  type delete = { bucket : (string [@key 1])
+                ; key    : (string [@key 2])
+                ; rw     : (int option [@key 3])
+                ; vclock : (string option [@key 4])
+                ; r      : (int option [@key 5])
+                ; w      : (int option [@key 6])
+                ; pr     : (int option [@key 7])
+                ; pw     : (int option [@key 8])
+                ; dw     : (int option [@key 9])
+		; bucket_type : (string option [@key 13])
   } [@@deriving protobuf]
 
   let delete_of_opts opts ~b ~k =
@@ -264,22 +264,21 @@ module Index_search = struct
                     ; return_terms : bool 
     } 
 
-    type string_range = { min          : string [@key 1]
-                    ; max          : string [@key 2]
-                    ; return_terms : bool [@key 3]
+    type string_range = { min          : (string [@key 1])
+                    ; max          : (string [@key 2])
+                    ; return_terms : (bool [@key 3])
     } [@@deriving protobuf]
 
-    type int_range = { min          : int [@key 1]
-                    ; max          : int [@key 2]
-                    ; return_terms : bool [@key 3]
+    type int_range = { min          : (int [@key 1])
+                    ; max          : (int [@key 2])
+                    ; return_terms : (bool [@key 3])
     } [@@deriving protobuf]
-
 
     type t =
-      | Eq_string    [@key 1] of string
-      | Eq_int       [@key 2] of int 
-      | Range_string [@key 3] of string_range 
-      | Range_int    [@key 4] of int_range [@@deriving protobuf]
+      | Eq_string    of (string [@key 2]) [@key 1]
+      | Eq_int       of (int [@key 4]) [@key 3]
+      | Range_string of (string_range [@key 6]) [@key 5] 
+      | Range_int    of (int_range [@key 8]) [@key 7] [@@deriving protobuf]
 
     let eq_string key =
       Eq_string key
@@ -307,12 +306,12 @@ module Index_search = struct
     | Max_results   of int
     | Continuation  of Kontinuation.t 
 
-  type index_search = { bucket       : string [@key 1]
-                      ; index        : string [@key 2]
-                      ; query_type   : Query.t [@key 3]
-                      ; max_results  : int option [@key 4]
-                      ; continuation : Kontinuation.t option [@key 5]
-                      ; timeout      : int option [@key 6]
+  type index_search = { bucket       : (string [@key 1])
+                      ; index        : (string [@key 2])
+                      ; query_type   : (Query.t [@key 3])
+                      ; max_results  : (int option [@key 4])
+                      ; continuation : (Kontinuation.t option [@key 5])
+                      ; timeout      : (int option [@key 6])
   } [@@deriving protobuf]
 
   let index_search_of_opts opts ~b ~index ~query_type =
